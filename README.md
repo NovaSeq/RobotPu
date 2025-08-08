@@ -36,7 +36,40 @@ Welcome to the Pu Robot project! This repository contains the MicroPython code a
 
 2. Flash your micro:bit with the latest MicroPython firmware
 
-3. Deploy your code using `mpremote` or your preferred method
+3. Deploy your code using the flash script or your preferred method
+
+## Flashing Code to Micro:bit
+
+This project includes a flash script to simplify the process of uploading code to your Micro:bit. The script will:
+
+- Set up a Python virtual environment
+- Install required dependencies
+- Minify your Python code
+- Generate a hex file
+- Flash the code to your connected Micro:bit
+
+### Prerequisites
+
+- Python 3.6 or higher
+- A connected Micro:bit in bootloader mode
+- On macOS/Linux: Ensure you have read/write permissions for the Micro:bit
+
+### Using the Flash Script
+
+1. Make sure your Micro:bit is connected to your computer
+2. Run the flash script:
+   ```bash
+   python flash_microbit.py
+   ```
+
+### Advanced Options
+
+- Specify a custom serial port:
+  ```bash
+  python flash_microbit.py --port /dev/tty.usbmodem1234
+  ```
+
+The generated hex file will be saved as `pu_robothex` in the project root directory.
 
 ## Development
 

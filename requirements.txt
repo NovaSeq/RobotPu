@@ -2,12 +2,13 @@
 mpremote>=1.20.0  # For interacting with micro:bit
 
 # MicroPython specific packages
-microbit>=2.0.0  # Core micro:bit functionality
-microbit-speech>=0.0.1  # For speech synthesis
-microbit-neopixel>=1.1.1  # For controlling Neopixel LEDs
+#microbit>=2.0.0  # Core micro:bit functionality
+#microbit-speech>=0.0.1  # For speech synthesis
+#microbit-neopixel>=1.1.1  # For controlling Neopixel LEDs
 
 # Development tools
 uflash>=2.0.0  # For flashing micro:bit
+microfs>=1.2.0  # For micro:bit file system operations
 
 # Optional: For advanced development
 # adafruit-circuitpython-bundle  # If using additional sensors/actuators
