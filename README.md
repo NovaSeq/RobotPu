@@ -44,9 +44,9 @@ This project includes a flash script to simplify the process of uploading code t
 
 - Set up a Python virtual environment
 - Install required dependencies
-- Minify your Python code
-- Generate a hex file
+- Minify your Python code to reduce file size
 - Flash the code to your connected Micro:bit
+- Flash the pu.txt (configuration file) to your connected Micro:bit
 
 ### Prerequisites
 
