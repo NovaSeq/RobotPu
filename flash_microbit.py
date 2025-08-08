@@ -169,7 +169,7 @@ def generate_hex(python_exec):
     print(f"Hex file generated: {os.path.abspath(OUTPUT_HEX)}")
     return os.path.join(OUTPUT_HEX, "micropython.hex")
     
-def copy_to_microbit(port, src_path, dest_name, max_retries=3):
+def copy_to_microbit(src_path, dest_name, max_retries=3):
     """Helper function to copy a file to micro:bit with retry logic."""
     for attempt in range(max_retries):
         try:
@@ -245,7 +245,7 @@ def flash_microbit(port=None):
                 dest_name = os.path.basename(file_info)
                 
             print(f"\n--- Copying {os.path.basename(src_path)} ---")
-            success = copy_to_microbit(port, src_path, dest_name)
+            success = copy_to_microbit(src_path, dest_name)
             if not success:
                 print(f"  - Warning: Failed to copy {os.path.basename(src_path)}")
             
