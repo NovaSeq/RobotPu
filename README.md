@@ -68,9 +68,6 @@ This project includes a flash script to simplify the process of uploading code t
   ```bash
   python flash_microbit.py --port /dev/tty.usbmodem1234
   ```
-
-The generated hex file will be saved as `pu_robothex` in the project root directory.
-
 ## Development
 
 - `main.py`: Contains the main application logic
