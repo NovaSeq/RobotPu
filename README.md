@@ -44,14 +44,14 @@ This project includes a flash script to simplify the process of uploading code t
 
 - Set up a Python virtual environment
 - Install required dependencies
-- Minify your Python code
-- Generate a hex file
+- Minify your Python code to reduce file size
 - Flash the code to your connected Micro:bit
+- Flash the pu.txt (configuration file) to your connected Micro:bit
 
 ### Prerequisites
 
 - Python 3.6 or higher
-- A connected Micro:bit in bootloader mode
+- A connected Micro:bit using USB cable
 - On macOS/Linux: Ensure you have read/write permissions for the Micro:bit
 
 ### Using the Flash Script
@@ -94,7 +94,6 @@ This project includes a flash script to simplify the process of uploading code t
 > sudo usermod -a -G dialout $USER
 > # Then log out and log back in for changes to take effect
 > ```
-
 
 ## Development
 

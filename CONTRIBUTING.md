@@ -52,8 +52,8 @@ This project and everyone participating in it is governed by our [Code of Conduc
 ## Development Workflow
 
 1. Make your changes
-2. Run tests (add specific test commands here)
-3. Ensure your code passes all checks
+2. Run unit tests (add specific test commands here)
+3. Ensure your code passes all checks by running them on Robot PU
 4. Commit your changes following the [commit message guidelines](#commit-message-guidelines)
 5. Push to your fork and open a Pull Request
 
