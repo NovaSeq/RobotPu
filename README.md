@@ -51,7 +51,7 @@ This project includes a flash script to simplify the process of uploading code t
 ### Prerequisites
 
 - Python 3.6 or higher
-- A connected Micro:bit in bootloader mode
+- A connected Micro:bit using USB cable
 - On macOS/Linux: Ensure you have read/write permissions for the Micro:bit
 
 ### Using the Flash Script
@@ -66,8 +66,35 @@ This project includes a flash script to simplify the process of uploading code t
 
 - Specify a custom serial port:
   ```bash
-  python flash_microbit.py --port /dev/tty.usbmodem1234
+  python flash_microbit.py --port PORT_STRING
   ```
+
+#### Finding the Correct Port:
+
+**Windows:**
+1. Open Device Manager (Win + X, then select "Device Manager")
+2. Expand "Ports (COM & LPT)"
+3. Look for "mbed Serial Port" or "USB Serial Device"
+4. The port will be something like `COM3` or `COM4`
+
+**macOS:**
+1. Open Terminal
+2. Run: `ls /dev/tty.*`
+3. Look for a device like `/dev/tty.usbmodem1234` or `/dev/tty.usbmodem1412`
+4. The Micro:bit usually has "usbmodem" in its name
+
+**Linux:**
+1. Open Terminal
+2. Run: `ls /dev/tty*` before and after connecting the Micro:bit
+3. The new device that appears is your Micro:bit
+4. Common names: `/dev/ttyACM0` or `/dev/ttyUSB0`
+
+> **Note:** On Linux, you might need to add your user to the `dialout` group:
+> ```bash
+> sudo usermod -a -G dialout $USER
+> # Then log out and log back in for changes to take effect
+> ```
+  
 ## Development
 
 - `main.py`: Contains the main application logic
