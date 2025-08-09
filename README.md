@@ -94,7 +94,7 @@ This project includes a flash script to simplify the process of uploading code t
 > sudo usermod -a -G dialout $USER
 > # Then log out and log back in for changes to take effect
 > ```
-  
+
 ## Development
 
 - `main.py`: Contains the main application logic
