@@ -9,6 +9,7 @@ mpremote>=1.20.0  # For interacting with micro:bit
 # Development tools
 uflash>=2.0.0  # For flashing micro:bit
 microfs>=1.2.0  # For micro:bit file system operations
+python_minifier
 
 # Optional: For advanced development
 # adafruit-circuitpython-bundle  # If using additional sensors/actuators

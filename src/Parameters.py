@@ -2,13 +2,13 @@
 class Parameters(object):
     def __init__(self):
         self.w_t, self.j_t, self.l_s = 16, 26, 45
-        self.s_tr = [-7, 0.0, -7, 0.0, -9.0, 0.0]
+        self.s_tr = [-5, -5.0, -5, -5.0, -9.0, 0.0]
         self.s_tg = [90.0] * 6
-        self.ep_dir = [-1.1, -0.7, 0.7, 1.1]
+        self.ep_dir = [-1.0, -0.7, 0.7, 1.0]
         self.ep_dis = [500.0] * len(self.ep_dir)
         self.walk_fw_sts, self.walk_bw_sts = [2, 3, 4, 5], [6, 5, 7, 3]
-        self.skate_fw_sts, self.skate_bw_sts = [8, 9, 10, 11], [12, 11, 13, 9]
-        self.dance_ok = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17]
+        self.skate_fw_sts, self.skate_bw_sts = [8, 9, 10, 11], [12, 1, 13, 9]
+        self.dance_ok = [0, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 16, 17]
         w_t, l_s, j_t = self.w_t, self.l_s, self.j_t
         self.st_tg = [
             # stand
