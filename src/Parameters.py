@@ -2,14 +2,21 @@
 class Parameters(object):
     def __init__(self):
         self.w_t, self.j_t, self.l_s = 16, 26, 45
+        # servo trim vector
         self.s_tr = [-5, -5.0, -5, -5.0, -9.0, 0.0]
+        # current servo target values
         self.s_tg = [90.0] * 6
+        # turning directions of each grid of point clouds
         self.ep_dir = [-1.0, -0.7, 0.7, 1.0]
         self.ep_dis = [500.0] * len(self.ep_dir)
+        # the list of poses for forward and backward walking
         self.walk_fw_sts, self.walk_bw_sts = [2, 3, 4, 5], [6, 5, 7, 3]
+        # the list of poses for forward and backward skating
         self.skate_fw_sts, self.skate_bw_sts = [8, 9, 10, 11], [12, 1, 13, 9]
+        # the list of safe poses for dancing
         self.dance_ok = [0, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 16, 17]
         w_t, l_s, j_t = self.w_t, self.l_s, self.j_t
+        # servo targets for each pose
         self.st_tg = [
             # stand
             [90, 90, 90, 90, 90, 80],
@@ -59,6 +66,7 @@ class Parameters(object):
             # rest
             [90, 90, 90, 90, 90, 90],
         ]
+        # servo control vector for each pose
         self.st_sp = [
             # stand
             [1, 1, 1, 1, 0.5, 0.5],
@@ -98,6 +106,9 @@ class Parameters(object):
         self.ep_size = len(self.ep_dis)
         self.ep_mid2 = int(self.ep_size * 0.5)
         self.ep_mid1 = max(0, self.ep_mid2 - 1)
+        # degrees of freedom    
         self.dof = len(self.s_tg)
+        # servo error 
         self.s_err = [0.0] * self.dof
+        # servo control vector
         self.s_ct = [0.0] * self.dof
