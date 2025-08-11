@@ -6,8 +6,8 @@ This script automates the process of:
 1. Setting up a Python virtual environment
 2. Installing required dependencies
 3. Minifying Python code
-4. Generating a hex file
-5. Flashing to a connected micro:bit
+5. Flashing main.py to a connected micro:bit
+6. Copying Python files to the micro:bit file system    
 
 Usage:
     python flash_microbit.py [--port PORT] [--list] [--no-flash]
@@ -19,38 +19,31 @@ import subprocess
 import shutil
 import argparse
 import time
-from pathlib import Path
-try:
-    import microfs  # For micro:bit file system operations
-except ImportError:
-    print("Warning: microfs module not found. Install with: pip install microfs")
-    microfs = None
-import uflash
 
 # Configuration
 VENV_DIR = ".venv"
 REQUIREMENTS = "requirements.txt"
 SOURCE_DIR = "src"
 BUILD_DIR = "build"
-OUTPUT_HEX = "pu_robot_hex"
+OUTPUT_HEX = "output"
 MICROBIT_VOLUME = "/Volumes/MICROBIT"  # Default for macOS, adjust for other OS
 
-def run_command(cmd):
+def run_command(cmd, check=True):
     """Run a shell command and return its output."""
-    print(f"Running: {cmd}")
     try:
-        # Use shell=True to handle paths with spaces properly
         result = subprocess.run(
             cmd,
             shell=True,
-            check=True,
+            check=check,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
         if result.stdout:
             print(f"Output: {result.stdout.strip()}")
-        return result.stdout
+        if result.stderr and result.returncode != 0:
+            print(f"Error: {result.stderr.strip()}")
+        return result
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {e.cmd}")
         if e.stdout:
@@ -61,23 +54,33 @@ def run_command(cmd):
         return None
 
 def setup_venv():
-    """Set up a Python virtual environment."""
+    """Set up a Python virtual environment and install requirements.
+    
+    Returns:
+        str: Path to the Python interpreter in the virtual environment
+    """
+    # Get the virtual environment paths
+    if sys.platform == "win32":
+        python = os.path.join(VENV_DIR, "Scripts", "python.exe")
+        pip = os.path.join(VENV_DIR, "Scripts", "pip.exe")
+    else:
+        python = os.path.join(VENV_DIR, "bin", "python")
+        pip = os.path.join(VENV_DIR, "bin", "pip")
+    
+    # Create virtual environment if it doesn't exist
     if not os.path.exists(VENV_DIR):
         print("Creating virtual environment...")
-        run_command(f"python -m venv {VENV_DIR}")
+        run_command(f"{sys.executable} -m venv {VENV_DIR}")
     
-    # Activate venv and install requirements
-    if sys.platform == "win32":
-        pip = os.path.join(VENV_DIR, "Scripts", "pip")
-        python = os.path.join(VENV_DIR, "Scripts", "python")
-    else:
-        pip = os.path.join(VENV_DIR, "bin", "pip")
-        python = os.path.join(VENV_DIR, "bin", "python")
-    
+    # Install/upgrade packages in the virtual environment
     print("Installing requirements...")
     run_command(f"{pip} install --upgrade pip")
     run_command(f"{pip} install -r {REQUIREMENTS}")
-    run_command(f"{pip} install pyminify")
+    run_command(f"{pip} install pyminify uflash microfs")
+    
+    # Verify Python interpreter exists
+    if not os.path.exists(python):
+        raise RuntimeError(f"Python interpreter not found at {python}")
     
     return python
 
@@ -89,7 +92,7 @@ def minify_code():
     if os.path.exists(BUILD_DIR):
         shutil.rmtree(BUILD_DIR)
     os.makedirs(BUILD_DIR, exist_ok=True)
-    
+
     # Minify each Python file
     for root, _, files in os.walk(SOURCE_DIR):
         for file in files:
@@ -170,6 +173,7 @@ def generate_hex(python_exec):
     return os.path.join(OUTPUT_HEX, "micropython.hex")
     
 def copy_to_microbit(src_path, dest_name, max_retries=3):
+    import microfs  # For micro:bit file system operations
     """Helper function to copy a file to micro:bit with retry logic."""
     for attempt in range(max_retries):
         try:
@@ -200,13 +204,11 @@ def flash_microbit(port=None):
     Args:
         port: Serial port of the micro:bit (e.g., '/dev/tty.usbmodem...' on macOS/Linux, 'COM3' on Windows)
     """
-    if microfs is None:
-        print("Error: microfs module is required for file operations")
-        return False
         
     print(f"Looking for micro:bit on port: {port or 'auto'}")
     
     try:
+        import uflash
         # flash main.py to the connected micro:bit
         print("Flashing main.py to micro:bit...")
         main_py_path = os.path.join(BUILD_DIR, 'main.py')
@@ -291,12 +293,13 @@ def main():
     
     # Setup virtual environment and install dependencies
     python_exec = setup_venv()
-    
-    # Minify code
-    build_dir = minify_code()
 
-    # Flash to micro:bit if requested
-    flash_microbit(args.port)
+    if not args.no_flash:
+        # Minify code
+        build_dir = minify_code()
+
+        # Flash to micro:bit if requested
+        flash_microbit(args.port)
     
     print("=== Done ===")
 
