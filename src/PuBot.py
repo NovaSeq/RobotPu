@@ -78,6 +78,7 @@ class RobotPu(object):
         self.ep_max_i = 0         # Index of clearest direction
         self.ep_thr = 7.5         # Distance threshold for obstacle detection (cm)
         self.ep_ot = 0            # Tilt offset during exploration
+        self.ep_far = 30          # Far distance threshold for obstacle detection (cm)  
         
         # Fall recovery tracking
         self.fell_count = 0       # Number of falls detected
@@ -402,14 +403,46 @@ class RobotPu(object):
         self.set_ct([0, 1, 2, 3, 4, 5], [0, 0, 0, 0, 0, 0])
         return self.move(sts, [0, 1, 2, 3], di * self.fw_sp,
                          [4, 5], di * self.fw_sp)
+
+    def map_sonar_to_direction(self, ep_dis, turn_gain=1.5):
+        """
+        Map sonar distance readings to a steering direction for auto-pilot.
+        
+        Args:
+            ep_dis: List of sonar distance readings from left to right
+            turn_aggressiveness: Scaling factor for turn intensity (default: 1.5)
+        
+        Returns:
+            float: Steering direction between -1.0 (full left) and 1.0 (full right)
+        """
+        if not ep_dis:
+            return 0.0
+        
+        # Calculate center of mass of the distances
+        tw = sum(ep_dis)
+        if tw == 0:
+            return 0.0
+        
+        # Calculate normalized position from -1 (left) to 1 (right)
+        pos = [i * 2 / (len(ep_dis) - 1) - 1 for i in range(len(ep_dis))] if len(ep_dis) > 1 else [0]
+        # calculate center of mass
+        cm = sum(d * p for d, p in zip(ep_dis, pos)) / tw
+        
+        # Apply turn aggressiveness and clamp to [-1, 1]
+        d = cm * turn_gain
+        return max(-1.0, min(1.0, d))
+    
     # compute auto-pilot parameters for explore mode
     def set_explore_param(self):
         obs_hcsr = min(pr.ep_dis[pr.ep_mid1], pr.ep_dis[pr.ep_mid2])
-        if obs_hcsr < self.ep_thr + 15:
-            max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
-            self.ep_di = (self.ep_di*3+pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2))*0.25
+        if obs_hcsr < self.ep_thr + self.ep_far:
+            # max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
+            # self.ep_di = (self.ep_di*3+pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2))*0.25
+            nd = self.map_sonar_to_direction(pr.ep_dis[pr.ep_mid1:pr.ep_mid2+1], 3)
         else:
-            self.ep_di = (self.ep_di*3+min(1.0, max(-1.0, (pr.ep_dis[pr.ep_mid2] - pr.ep_dis[pr.ep_mid1]) / (pr.ep_dis[pr.ep_mid2] + pr.ep_dis[pr.ep_mid1]) * 1.5)))*0.25
+            #self.ep_di = (self.ep_di*3+min(1.0, max(-1.0, (pr.ep_dis[pr.ep_mid2] - pr.ep_dis[pr.ep_mid1]) / (pr.ep_dis[pr.ep_mid2] + pr.ep_dis[pr.ep_mid1]) * 1.5)))*0.25
+            nd = self.map_sonar_to_direction(pr.ep_dis, 3)
+        self.ep_di = (self.ep_di*3+nd)*0.25
         obs_hcsr = min(pr.ep_dis)
         dis = (obs_hcsr - self.ep_thr)
         if self.ep_sp < 0:
