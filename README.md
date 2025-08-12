@@ -1,6 +1,6 @@
 # Pu Robot Project
 
-![Pu Robot](https://robotgyms.com/wp-content/uploads/2023/10/Pu-1-1024x1024.jpg)
+![Pu Robot](https://robotgyms.com/wp-content/uploads/2025/05/amazon-main-page-3.png)
 
 ## 🤖 Meet Pu - Your AI-Powered Learning Buddy!
 
