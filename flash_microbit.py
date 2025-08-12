@@ -151,7 +151,10 @@ def merge_python_files(work_dir, src_dir):
     return merged_file
 
 def generate_hex(python_exec):
-    """Generate a hex file from the main Python file."""
+    """Generate a hex file from the main Python file using a specific MicroPython runtime.
+    
+    Uses the 0257_nrf52820_microbit_if_crc_c782a5ba90_gcc.hex firmware from the hex folder.
+    """
     print("Generating hex file...")
 
     # Merge all Python files into one
@@ -161,17 +164,29 @@ def generate_hex(python_exec):
         print(f"Error: {main_py} not found")
         sys.exit(1)
 
-    os.makedirs(OUTPUT_HEX, exist_ok=True)
+    # Path to the custom runtime firmware
+    runtime_hex = os.path.join("hex", "0257_nrf52820_microbit_if_crc_c782a5ba90_gcc.hex")
+    
+    if not os.path.exists(runtime_hex):
+        print(f"Error: Runtime firmware not found at {runtime_hex}")
+        sys.exit(1)
 
-    # Only pass the main.py file to uflash - it will handle imports
-    cmd = f"{python_exec} -m uflash {main_py} {OUTPUT_HEX}"
+    os.makedirs(OUTPUT_HEX, exist_ok=True)
+    output_hex = os.path.join(OUTPUT_HEX, "micropython.hex")
+
+    # Use uflash with the specified runtime
+    cmd = f"{python_exec} -m uflash --runtime {runtime_hex} {main_py} -o {output_hex}"
     
     # Run the command
-    run_command(cmd)
+    result = run_command(cmd)
     
-    print(f"Hex file generated: {os.path.abspath(OUTPUT_HEX)}")
-    return os.path.join(OUTPUT_HEX, "micropython.hex")
-    
+    if result and result.returncode == 0:
+        print(f"Hex file generated: {os.path.abspath(output_hex)}")
+        return output_hex
+    else:
+        print("Error generating hex file")
+        sys.exit(1)
+
 def copy_to_microbit(src_path, dest_name, max_retries=3):
     import microfs  # For micro:bit file system operations
     """Helper function to copy a file to micro:bit with retry logic."""
@@ -198,6 +213,7 @@ def copy_to_microbit(src_path, dest_name, max_retries=3):
     
     print(f"  - Failed to copy {dest_name} after {max_retries} attempts")
     return False
+
 
 def flash_microbit(port=None):
     """Flash the hex file to a connected micro:bit and copy Python files to the file system.

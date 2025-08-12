@@ -1,3 +1,7 @@
 python-minifier>=2.5.0
 uflash>=2.0.0
+microfs>=1.2.0
 # Add any additional dependencies required for flashing here
+# Hex conversion and manipulation
+py2hex>=0.3.0
+intelhex>=2.3.0

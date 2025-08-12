@@ -46,7 +46,7 @@ class RobotPu(object):
         
         # Motion control parameters
         self.last_cmd_ts = 0      # Timestamp of last received command (ms)
-        self.fw_sp = 4            # Forward speed multiplier
+        self.fw_sp = 6         # Forward speed multiplier
         self.bw_sp = -3           # Backward speed multiplier
         self.sp = 0.0             # Current speed setting
         self.di = 0.0             # Current direction setting (degrees)
@@ -331,19 +331,19 @@ class RobotPu(object):
         """
         sts = fw_l if sp > 0 else bw_l
         self.balance_param()
-        if self.max_g > 2500:
-            sp *= 0.6  # Reduce speed when tilted
-            
+        
         if wk.pos < 2 or wk.pos == 6:  # left side
             self.l_o_t = min(self.max_rl_ctl, max(0.0, self.bd_rl*0.8 - pr.w_t))
-            lf = -15 * di
+            lf = -12 * di
         else:  # right side
             self.r_o_t = max(-self.max_rl_ctl, min(0.0, self.bd_rl*0.8 + pr.w_t))
-            lf = 15 * di
+            lf = 12 * di
             
         # Calculate overall tilt compensation
         o_t = self.l_o_t + self.r_o_t
-        sp = sp / (1 + math.sqrt(math.fabs(o_t * 0.5)))
+
+        # stability compensation of speed
+        sp /= 1.0 + 0.01 * (abs(self.bd_rl) + abs(self.bd_pth))+ math.sqrt(math.fabs(o_t * 0.5))
         
         # Apply control to servos
         self.set_ct([0, 1, 2, 3, 4, 5],
@@ -358,7 +358,7 @@ class RobotPu(object):
         This method:
         1. Gets current accelerometer readings
         2. Calculates pitch and roll angles
-        3. Updates body orientation tracking
+        3. Updates body orientation
         4. Applies low-pass filtering to smooth readings
         """
         a = accelerometer.get_values()
@@ -407,9 +407,9 @@ class RobotPu(object):
         obs_hcsr = min(pr.ep_dis[pr.ep_mid1], pr.ep_dis[pr.ep_mid2])
         if obs_hcsr < self.ep_thr + 15:
             max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
-            self.ep_di = pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2)
+            self.ep_di = (self.ep_di*3+pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2))*0.25
         else:
-            self.ep_di = min(1.0, max(-1.0, (pr.ep_dis[pr.ep_mid2] - pr.ep_dis[pr.ep_mid1]) / (pr.ep_dis[pr.ep_mid2] + pr.ep_dis[pr.ep_mid1]) * 1.5))
+            self.ep_di = (self.ep_di*3+min(1.0, max(-1.0, (pr.ep_dis[pr.ep_mid2] - pr.ep_dis[pr.ep_mid1]) / (pr.ep_dis[pr.ep_mid2] + pr.ep_dis[pr.ep_mid1]) * 1.5)))*0.25
         obs_hcsr = min(pr.ep_dis)
         dis = (obs_hcsr - self.ep_thr)
         if self.ep_sp < 0:
@@ -417,7 +417,8 @@ class RobotPu(object):
             if random.randint(0, 400) == 0:
                 self.talk(self.c.sentences[5])
                 self.ro.send_str("#puc:" + self.sn + ":W1")
-        self.ep_sp = min(self.fw_sp, (dis + 5) * 0.8) if dis >= 0 else max(self.bw_sp, (dis - 4) * 0.3)
+        # apply low-pass filter to speed
+        self.ep_sp = (self.ep_sp+min(self.fw_sp, (dis + 5) * 0.8) if dis >= 0 else max(self.bw_sp, (dis - 5) * 0.6))*0.5
 
     # make the robot explore with self-balance
     def explore(self):
@@ -564,7 +565,7 @@ class RobotPu(object):
 
     # control the direction of the robot
     def turn(self, v:float):
-        self.di = (self.di + v) * 0.5
+        self.di = (self.di*4 + v) * 0.2
 
     # control the roll of the robot
     def roll(self, v:float):
@@ -584,7 +585,7 @@ class RobotPu(object):
             self.ro.send_str("#puack")
         elif v == 1:
             self.talk("Exploring")
-            self.ep_sp = 3.0
+            self.ep_sp = 4.0
             self.ep_di = 0.0
             self.gst = 1
         elif v == 2:
@@ -699,7 +700,7 @@ class RobotPu(object):
                 if self.gst == -3:  # If recovering
                     self.gst = self.last_state  # Return to previous state
                     self.talk("Thanks")  # Acknowledge recovery
-                    self.show_channel()  # Update display
+                    #self.show_channel()  # Update display
 
     # state machine
     def state_machine(self):
@@ -764,7 +765,7 @@ class RobotPu(object):
                 self.state_machine()
                 
                 # Optional: Uncomment for memory usage monitoring
-                # gc.collect()
+                if random.randint(0, 200) == 0: gc.collect()
                 # print(time.ticks_ms(), gc.mem_alloc(), gc.mem_free())
                 
             except Exception as e:
