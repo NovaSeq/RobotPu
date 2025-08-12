@@ -99,9 +99,18 @@ This project includes a flash script to simplify the process of uploading code t
 
 **Important Stability Notice for uflash 2.0.0**
 
-The current version of uflash (2.0.0) uses MicroPython firmware 2.0.0.beta which may cause random freezes during operation. For stable builds, please follow this alternative workflow:
+The current stable version of uflash (2.0.0) uses MicroPython firmware 2.0.0.beta which may cause random freezes during operation. For stable builds, please use one of the following methods:
 
-1. **Initial Flash with MU Editor**
+#### Option 1: Install Latest uflash from Source
+```bash
+git clone https://github.com/ntoll/uflash.git
+cd uflash
+pip install -e .
+```
+Then use the flash script as normal.
+
+#### Option 2: Use MU Editor
+1. **Initial Flash**
    - Install [MU Editor](https://codewith.mu/) version 1.2.0 or later
    - Open your minified `main.py` (under the build directory) in MU Editor
    - Click the "Flash" button to flash the main script to your micro:bit
@@ -109,14 +118,14 @@ The current version of uflash (2.0.0) uses MicroPython firmware 2.0.0.beta which
 2. **Copy Additional Files**
    - After flashing, use MU Editor's file browser (Files button)
    - Manually copy all other minified Python files (under the build directory) to the micro:bit
-   - Manually copy the pu.txt (under the src directory) to the micro:bit
+   - Manually copy the `pu.txt` (under the src directory) to the micro:bit
    - Ensure files are transferred completely before disconnecting
 
 3. **Verification**
    - The micro:bit should restart automatically
    - Check the serial console in MU Editor for any error messages
 
-**Note:** This workaround is temporary until uflash includes a stable release of the MicroPython firmware.
+**Note:** These workarounds are temporary until uflash includes a stable release of the MicroPython firmware.
 
 ## Development
 
