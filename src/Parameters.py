@@ -1,7 +1,7 @@
 
 class Parameters(object):
     def __init__(self):
-        self.w_t, self.j_t, self.l_s = 16, 26, 45
+        self.w_t, self.j_t, self.l_s = 16, 27, 45
         # servo trim vector
         self.s_tr = [-5, -5.0, -5, -5.0, -9.0, 0.0]
         # current servo target values

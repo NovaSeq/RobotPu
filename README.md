@@ -66,7 +66,7 @@ This project includes a flash script to simplify the process of uploading code t
 
 - Specify a custom serial port:
   ```bash
-  python flash_microbit.py --port PORT_STRING
+  python flash_microbit.py 
   ```
 
 #### Finding the Correct Port:
@@ -94,6 +94,29 @@ This project includes a flash script to simplify the process of uploading code t
 > sudo usermod -a -G dialout $USER
 > # Then log out and log back in for changes to take effect
 > ```
+
+### Warning
+
+**Important Stability Notice for uflash 2.0.0**
+
+The current version of uflash (2.0.0) uses MicroPython firmware 2.0.0.beta which may cause random freezes during operation. For stable builds, please follow this alternative workflow:
+
+1. **Initial Flash with MU Editor**
+   - Install [MU Editor](https://codewith.mu/) version 1.2.0 or later
+   - Open your minified `main.py` (under the build directory) in MU Editor
+   - Click the "Flash" button to flash the main script to your micro:bit
+
+2. **Copy Additional Files**
+   - After flashing, use MU Editor's file browser (Files button)
+   - Manually copy all other minified Python files (under the build directory) to the micro:bit
+   - Manually copy the pu.txt (under the src directory) to the micro:bit
+   - Ensure files are transferred completely before disconnecting
+
+3. **Verification**
+   - The micro:bit should restart automatically
+   - Check the serial console in MU Editor for any error messages
+
+**Note:** This workaround is temporary until uflash includes a stable release of the MicroPython firmware.
 
 ## Development
 
