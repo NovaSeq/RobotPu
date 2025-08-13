@@ -476,7 +476,7 @@ class RobotPu(object):
     def dance(self):
         ts = time.ticks_ms()
         ms = microphone.sound_level()
-        il = self.music.is_a_beat(ts, ms, 1.05)
+        il = self.music.is_a_beat(ts, ms, 1.1)
         if ts - self.last_high_b > self.music.period * 0.5:
             self.dance_l_itv *= -1
             self.dance_u_itv *= -1
