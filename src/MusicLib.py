@@ -5,7 +5,7 @@ class MusicLib(object):
     def __init__(self):
         self.loud_thr = 15 # the loudness threshold for beats
         self.loud = 0
-        self.buf_size = 41 # 40 measurements bucket and 1 data collection bucket
+        self.buf_size = 43 # 42 measurements bucket and 1 data collection bucket
         self.buf = [0] * self.buf_size # ring buffer of loudness
         self.last_idx = 0
         self.period = 500 # period of music beats, 500ms is the most possible period
@@ -30,9 +30,9 @@ class MusicLib(object):
             c_idx = ring_buffer_idx(idx, -2, self.buf_size) # starting with the bucket before previous bucket
             prev_idx = c_idx #  full bucket index before previous full bucket
             c = 0 # count of beats
-            length = self.buf_size - 1 # only use full buckets
             # Calculate average loudness of the buffer
             avg_loudness = sum(self.buf) / self.buf_size
+            length = self.buf_size - 3 # only use full buckets
             for i in range(length):
                 nl = ring_buffer_idx(c_idx, -1, self.buf_size) # left neighbor
                 nr = ring_buffer_idx(c_idx, 1, self.buf_size) # right neighbor
