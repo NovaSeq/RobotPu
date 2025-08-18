@@ -135,7 +135,7 @@ class WK(object):
         self.pos = min(self.pos, len(states) - 1)  # Ensure position is in range
         self.c_s = states[self.pos]  # Get current state
         targets = p.st_tg[self.c_s]  # Get target positions for current state
-        sps = p.st_sp[self.c_s]      # Get speed settings for current state
+        sps = p.st_sp[p.dict_sp.get(self.c_s,1)]  # Get speed settings for current state
         
         # Move synchronous servos
         for i in sync_list:

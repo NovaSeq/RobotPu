@@ -29,12 +29,9 @@ Welcome to the Pu Robot project! This repository contains the MicroPython code a
 
 ## Getting Started
 
-1. Install required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+1. Install python3.10 above to your computer
 
-2. Flash your micro:bit with the latest MicroPython firmware
+2. Flash your micro:bit with the latest MicroPython firmware (optional)
 
 3. Deploy your code using the flash script or your preferred method
 
@@ -50,7 +47,7 @@ This project includes a flash script to simplify the process of uploading code t
 
 ### Prerequisites
 
-- Python 3.6 or higher
+- Python 3.10 or higher
 - A connected Micro:bit using USB cable
 - On macOS/Linux: Ensure you have read/write permissions for the Micro:bit
 
@@ -66,7 +63,7 @@ This project includes a flash script to simplify the process of uploading code t
 
 - Specify a custom serial port:
   ```bash
-  python flash_microbit.py 
+  python flash_microbit.py --port /dev/tty.usbmodem1234
   ```
 
 #### Finding the Correct Port:
