@@ -78,7 +78,7 @@ class RobotPu(object):
         self.ep_max_i = 0         # Index of clearest direction
         self.ep_thr = 7.5         # Distance threshold for obstacle detection (cm)
         self.ep_ot = 0            # Tilt offset during exploration
-        self.ep_far = 30          # Far distance threshold for obstacle detection (cm)  
+        self.ep_far = 20          # Far distance threshold for obstacle detection (cm)  
         
         # Fall recovery tracking
         self.fell_count = 0       # Number of falls detected
