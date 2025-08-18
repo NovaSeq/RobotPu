@@ -3,7 +3,7 @@ class Parameters(object):
     def __init__(self):
         self.w_t, self.j_t, self.l_s = 16, 27, 45
         # servo trim vector
-        self.s_tr = [-5, -2.0, -5, -2.0, -9.0, 0.0]
+        self.s_tr = [-5, -0.0, -5, -0.0, -9.0, 0.0]
         # current servo target values
         self.s_tg = [90.0] * 6
         # turning directions of each grid of point clouds
