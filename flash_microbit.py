@@ -84,7 +84,7 @@ def setup_venv():
     
     return python
 
-def minify_code():
+def minify_code(python_exec):
     """Minify Python code using pyminify."""
     print("Minifying Python code...")
     
@@ -105,7 +105,7 @@ def minify_code():
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 
                 # Minify the file
-                run_command(f"python -m python_minifier {src_path} -o {dest_path} --remove-literal-statements ")
+                run_command(f"{python_exec} -m python_minifier {src_path} -o {dest_path} --remove-literal-statements ")
     
     return BUILD_DIR
 
@@ -224,15 +224,23 @@ def flash_microbit(port=None):
     print(f"Looking for micro:bit on port: {port or 'auto'}")
     
     try:
-        import uflash
         # flash main.py to the connected micro:bit
         print("Flashing main.py to micro:bit...")
         main_py_path = os.path.join(BUILD_DIR, 'main.py')
+        import uflash
         if port:
             uflash.flash(paths_to_microbits=[port], path_to_python=main_py_path)
         else:
             uflash.flash(path_to_python=main_py_path)
-            
+        # cmd = [python_exec, "-m", "uflash", main_py_path]
+        
+        # # Add port if specified
+        # if port:
+        #     cmd.extend(["--port", port])
+        
+        # print(f"Flashing {main_py_path} to micro:bit...")
+        # result = subprocess.run(cmd, capture_output=True, text=True)
+        
         print("Waiting for micro:bit to initialize...")
         time.sleep(6)  # Wait for micro:bit to initialize
         
@@ -298,7 +306,7 @@ def main():
     parser = argparse.ArgumentParser(description='Flash micro:bit with Python code')
     parser.add_argument('--port', help='Serial port for micro:bit (e.g., /dev/tty.usbmodem... or COM3)')
     parser.add_argument('--list', action='store_true', help='List connected micro:bits and exit')
-    parser.add_argument('--no-flash', action='store_true', help='Generate hex without flashing')
+    parser.add_argument('--prepare', action='store_true', help='Create virtual environment and install dependencies')
     args = parser.parse_args()
     
     print("=== Micro:bit Flasher ===")
@@ -310,9 +318,9 @@ def main():
     # Setup virtual environment and install dependencies
     python_exec = setup_venv()
 
-    if not args.no_flash:
+    if not args.prepare:
         # Minify code
-        build_dir = minify_code()
+        build_dir = minify_code(python_exec)
 
         # Flash to micro:bit if requested
         flash_microbit(args.port)
