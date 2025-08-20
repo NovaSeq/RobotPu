@@ -50,28 +50,24 @@ This project includes a flash script to simplify the process of uploading code t
 - Python 3.10 or higher
 - A connected Micro:bit using USB cable
 - On macOS/Linux: Ensure you have read/write permissions for the Micro:bit
-- Create a virtual environment by running:
+- Create a virtual environment by running: (optional)
   ```bash
-  python flash_microbit.py --prepare
+  python3 flash_microbit.py --prepare
   ```
 
 ### Using the Flash Script
 
 1. Make sure your Micro:bit is connected to your computer
-2. activate the virtual environment by running:
-  ```bash
-  source .venv/bin/activate
-  ``` 
-3. Run the flash script:
+2. Run the flash script:
    ```bash
-   python flash_microbit.py
+   python3 flash_microbit.py
    ```
 
 ### Advanced Options
 
 - Specify a custom serial port:
   ```bash
-  python flash_microbit.py --port /dev/tty.usbmodem1234
+  python3 flash_microbit.py --port /dev/tty.usbmodem1234
   ```
 
 #### Finding the Correct Port:
