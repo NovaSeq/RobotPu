@@ -215,7 +215,67 @@ def copy_to_microbit(src_path, dest_name, max_retries=3):
     return False
 
 
-def flash_microbit(port=None):
+def copy_to_microbit2(python_exec, src_path, dest_name=None, max_retries=3):
+    """Copy file to micro:bit using 'python -m microfs put' command.
+    
+    Args:
+        src_path (str): Path to the source file to copy
+        dest_name (str, optional): Destination filename on the micro:bit. 
+                                 If None, uses the source filename.
+        max_retries (int): Maximum number of retry attempts
+        
+    Returns:
+        bool: True if copy was successful, False otherwise
+    """
+    if dest_name is None:
+        dest_name = os.path.basename(src_path)
+
+    for attempt in range(max_retries):
+        try:
+            print(f"  - Attempt {attempt + 1}/{max_retries} for {os.path.basename(src_path)}...")
+            
+            # Run the microfs put command
+            result = subprocess.run(
+                [python_exec, '-m', 'microfs', 'put', src_path],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                print(f"  - Successfully copied to {dest_name}")
+                time.sleep(1)  # Brief pause for filesystem
+                
+                # Verify file exists
+                ls_result = subprocess.run(
+                    [python_exec, '-m', 'microfs', 'ls'],
+                    capture_output=True,
+                    text=True
+                )
+                
+                if dest_name in ls_result.stdout:
+                    print(f"  - Verified {dest_name} on micro:bit")
+                    return True
+                print(f"  - Warning: {dest_name} not found on micro:bit")
+            else:
+                error_msg = result.stderr.strip()
+                if not error_msg and result.stdout:
+                    error_msg = result.stdout.strip()
+                print(f"  - Error: {error_msg or 'Unknown error'}")
+                
+            if attempt < max_retries - 1:
+                print("  - Retrying in 5 seconds...")
+                time.sleep(5)
+                
+        except Exception as e:
+            print(f"  - Error: {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(5)
+    
+    print(f"  - Failed to copy {dest_name} after {max_retries} attempts")
+    return False
+
+
+def flash_microbit(python_exec,port=None):
     """Flash the hex file to a connected micro:bit and copy Python files to the file system.
     Args:
         port: Serial port of the micro:bit (e.g., '/dev/tty.usbmodem...' on macOS/Linux, 'COM3' on Windows)
@@ -227,19 +287,19 @@ def flash_microbit(port=None):
         # flash main.py to the connected micro:bit
         print("Flashing main.py to micro:bit...")
         main_py_path = os.path.join(BUILD_DIR, 'main.py')
-        import uflash
-        if port:
-            uflash.flash(paths_to_microbits=[port], path_to_python=main_py_path)
-        else:
-            uflash.flash(path_to_python=main_py_path)
-        # cmd = [python_exec, "-m", "uflash", main_py_path]
-        
-        # # Add port if specified
+        # import uflash
         # if port:
-        #     cmd.extend(["--port", port])
+        #     uflash.flash(paths_to_microbits=[port], path_to_python=main_py_path)
+        # else:
+        #     uflash.flash(path_to_python=main_py_path)
+        cmd = [python_exec, "-m", "uflash", main_py_path]
         
-        # print(f"Flashing {main_py_path} to micro:bit...")
-        # result = subprocess.run(cmd, capture_output=True, text=True)
+        # Add port if specified
+        if port:
+            cmd.extend(["--port", port])
+        
+        print(f"Flashing {main_py_path} to micro:bit...")
+        result = subprocess.run(cmd, capture_output=True, text=True)
         
         print("Waiting for micro:bit to initialize...")
         time.sleep(6)  # Wait for micro:bit to initialize
@@ -271,7 +331,7 @@ def flash_microbit(port=None):
                 dest_name = os.path.basename(file_info)
                 
             print(f"\n--- Copying {os.path.basename(src_path)} ---")
-            success = copy_to_microbit(src_path, dest_name)
+            success = copy_to_microbit2(python_exec, src_path)
             if not success:
                 print(f"  - Warning: Failed to copy {os.path.basename(src_path)}")
             
@@ -323,7 +383,7 @@ def main():
         build_dir = minify_code(python_exec)
 
         # Flash to micro:bit if requested
-        flash_microbit(args.port)
+        flash_microbit(python_exec, args.port)
     
     print("=== Done ===")
 
