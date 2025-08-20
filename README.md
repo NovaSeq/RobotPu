@@ -102,11 +102,13 @@ This project includes a flash script to simplify the process of uploading code t
 
 The current stable version of uflash (2.0.0) uses MicroPython firmware 2.0.0.beta which may cause random freezes during operation. For stable builds, please use one of the following methods:
 
-#### Option 1: Install Latest uflash from Source
+#### Option 1: Install Latest uflash from github Source that has fixed the issue
 ```bash
 git clone https://github.com/ntoll/uflash.git
 cd uflash
-pip install -e .
+. RobotPu/.venv/bin/activate    # activate the virtual environment that is in RobotPu directory
+pip uninstall uflash -y # uninstall the old uflash
+python setup.py install # install the new uflash from uflash directory
 ```
 Then use the flash script as normal.
 
