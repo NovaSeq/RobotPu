@@ -493,7 +493,8 @@ class RobotPu(object):
         if math.fabs(ft)<8:
             ft =0
         lt = ft + self.dance_l_itv
-        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv+ms*0.1])
+        self.set_ct([0, 1, 2, 3, 4, 5,6,7,8,9], 
+        [ft, lt, ft, lt, self.rl, self.dance_u_itv+ms*0.1,lt,lt,ft,ft])
         self.d_sp = min(2.5, self.d_sp * 1.015)
         if self.max_g > 1800:
             self.d_sp *= 0.9
