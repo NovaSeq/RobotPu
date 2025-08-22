@@ -165,7 +165,10 @@ class RobotPu(object):
                 c = f.read().split('\n')
                 self.sn = c[0]
                 self.groupID = int(c[1])
-                pr.s_tr = [float(i) for i in c[2].split(',')]
+                t = [float(i) for i in c[2].split(',')]
+                # Copy elements from a into b, preserving extra items in b
+                for i in range(min(len(pr.s_tr), len(t))):
+                    pr.s_tr[i] = t[i]
         except Exception:
             # Silently continue with default values if config can't be read
             pass
