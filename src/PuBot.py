@@ -165,7 +165,10 @@ class RobotPu(object):
                 c = f.read().split('\n')
                 self.sn = c[0]
                 self.groupID = int(c[1])
-                pr.s_tr = [float(i) for i in c[2].split(',')]
+                t = [float(i) for i in c[2].split(',')]
+                # Copy elements from a into b, preserving extra items in b
+                for i in range(min(len(pr.s_tr), len(t))):
+                    pr.s_tr[i] = t[i]
         except Exception:
             # Silently continue with default values if config can't be read
             pass
@@ -232,7 +235,7 @@ class RobotPu(object):
         This method positions all servos to their default neutral positions
         with a moderate movement speed (2.0).
         """
-        self.move([0], [0, 1, 2, 3, 4, 5], 2.0, [], 0.5)
+        self.move([0], list(range(pr.dof)), 2.0, [], 0.5)
 
     # make the robot introduce itself
     def intro(self):
@@ -345,11 +348,11 @@ class RobotPu(object):
 
         # stability compensation of speed
         sp /= 1.0 + 0.01 * (abs(self.bd_rl) + abs(self.bd_pth))+ math.sqrt(math.fabs(o_t * 0.5))
-        
+        f_t = min(25.0, -2.0 * self.bd_pth2)
         # Apply control to servos
-        self.set_ct([0, 1, 2, 3, 4, 5],
-                   [o_t, lf - o_t, o_t, -lf - o_t, -40 * di - o_t, min(25.0, -2.0 * self.bd_pth2)])
-        return self.move(sts, [0, 1, 2, 3], sp, [4, 5], sp)
+        self.set_ct([0, 1, 2, 3, 4, 5, 6,7,8,9],
+                   [o_t, lf - o_t, o_t, -lf - o_t, -40 * di - o_t, f_t, -f_t, f_t, -self.rl, -self.rl])
+        return self.move(sts, [0, 1, 2, 3], sp, list(range(4, pr.dof)), sp)
 
     # calculate balance parameters from IMU data
     def balance_param(self):
@@ -383,15 +386,15 @@ class RobotPu(object):
         self.balance_param()
         rl = min(35.0, max(-35.0, self.bd_rl2))
         if abs(rl)> 5:
-            self.set_ct([0, 1, 2, 3, 4],
-                       [rl, rl * -1.0, rl, rl * -1.0, rl * -0.5])
+            self.set_ct([0, 1, 2, 3, 4, 8, 9],
+                       [rl, rl * -1.0, rl, rl * -1.0, rl * -0.5, -rl, -rl])
         if math.fabs(self.bd_pth2) > 12:
-            self.set_ct([5], [-self.bd_pth2])
+            self.set_ct([5,6,7], [-self.bd_pth2, -self.bd_pth2, self.bd_pth2])
         sl = microphone.sound_level()
         pr.st_tg[self.r_st][5]=90-sl*0.3
         return self.move([self.r_st], [0, 1, 2, 3, 4, 5],
                          1 + sl*0.01,
-                         [], 0.5)
+                         list(range(6, pr.dof)), 0.5)
 
     # make the robot walk with self-balance
     def walk(self, sp, di):
@@ -402,7 +405,7 @@ class RobotPu(object):
         sts = [20, 22, 0, 19] if di > 0 else [18, 21, 23, 0]
         self.set_ct([0, 1, 2, 3, 4, 5], [0, 0, 0, 0, 0, 0])
         return self.move(sts, [0, 1, 2, 3], di * self.fw_sp,
-                         [4, 5], di * self.fw_sp)
+                         list(range(4, pr.dof)), di * self.fw_sp)
 
     def get_turn_from_sonar(self, ep_dis, turn_gain=1.5):
         """
@@ -490,15 +493,15 @@ class RobotPu(object):
         if math.fabs(ft)<8:
             ft =0
         lt = ft + self.dance_l_itv
-        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.1])
+        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv+ms*0.1])
         self.d_sp = min(2.5, self.d_sp * 1.015)
         if self.max_g > 1800:
             self.d_sp *= 0.9
-        return self.move(self.d_st, [0, 1, 2, 3], self.d_sp, [4, 5], self.d_sp)
+        return self.move(self.d_st, [0, 1, 2, 3], self.d_sp, list(range(4, pr.dof)), self.d_sp)
 
     # make the robot jump
     def jump(self):
-        md = self.move([24, 14, 0, 0], [0, 1, 2, 3], 3, [4, 5], 2)
+        md = self.move([24, 14, 0, 0], [0, 1, 2, 3], 3, list(range(4, pr.dof)), 2)
         if md == 0 and wk.pos == 3:
             self.gst = 5
             wk.servo(6, 0)
@@ -507,7 +510,7 @@ class RobotPu(object):
 
     # make the robot kick
     def kick(self):
-        md = self.move(pr.walk_fw_sts, [0, 1, 2, 3], 3, [4, 5], 2)
+        md = self.move(pr.walk_fw_sts, [0, 1, 2, 3], 3, list(range(4, pr.dof)), 2)
         if md == 0 and (wk.pos == 0 or wk.pos == 2):
             self.gst = 5
 
@@ -793,21 +796,21 @@ class RobotPu(object):
         - Continues operation after errors when possible
         """
         while True:
-            try:
-                # Process any incoming radio commands
-                self.process_radio_cmd()
+            #try:
+            # Process any incoming radio commands
+            self.process_radio_cmd()
+            
+            # Update robot states based on current conditions
+            self.set_states()
+            
+            # Execute the current state's behavior
+            self.state_machine()
+            
+            # Optional: Uncomment for memory usage monitoring
+            if random.randint(0, 200) == 0: gc.collect()
+            # print(time.ticks_ms(), gc.mem_alloc(), gc.mem_free())
                 
-                # Update robot states based on current conditions
-                self.set_states()
-                
-                # Execute the current state's behavior
-                self.state_machine()
-                
-                # Optional: Uncomment for memory usage monitoring
-                if random.randint(0, 200) == 0: gc.collect()
-                # print(time.ticks_ms(), gc.mem_alloc(), gc.mem_free())
-                
-            except Exception as e:
-                # Log errors and attempt to recover
-                print(e)
-                gc.collect()  # Clean up memory on error
+            # except Exception as e:
+            #     # Log errors and attempt to recover
+            #     print(e)
+            #     gc.collect()  # Clean up memory on error

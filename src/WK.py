@@ -5,6 +5,15 @@ import time
 import random
 
 WK_ADDR = 0x10
+# Servo control parameters
+
+def set_servo_angle(pin, angle):
+    """Set servo to a specific angle (0 to 180 degrees)."""
+    # 600, Minimum pulse width in microseconds (0°)
+    # 2400, Maximum pulse width in microseconds (180°)
+    pw = 600 + (angle / 180) * (2400 - 600)
+    duty = int((pw / 20000) * 1023)  # 2000us, Servo PWM period in microseconds (20ms)
+    pin.write_analog(duty)
 
 class WK(object):
     """
@@ -29,6 +38,16 @@ class WK(object):
         self.idle = False    # Whether servos are idle
         self.c_s = 0         # Current state index
         i2c.init()           # Initialize I2C communication
+
+        # Setup pins for direct servo control
+        self.pin_map = {
+            8: pin14,
+            9: pin15
+        }
+        # Set PWM period for all servo pins (only needs to be done once)
+        for pin in self.pin_map.values():
+            pin.set_analog_period(20)  # 50Hz (20ms) for servos
+
     # control DC motor, m is motor index, sp is speed
     def motor(self, m, sp):
         """
@@ -47,12 +66,16 @@ class WK(object):
         Set the angle of a servo motor.
         
         Args:
-            sr (int): Servo index (0-7)
+            sr (int): Servo index (0-7 for I2C servos, 8 for pin14, 9 for pin15)
             a (int): Target angle in degrees (0-180)
         """
+        a = min(180, max(0, int(a)))
         if 0 <= sr <= 7:
-            a = min(180, max(0, int(a)))
             i2c.write(WK_ADDR, bytearray([0x10 if sr == 7 else sr + 3, a, 0, 0]))
+        elif pin := self.pin_map.get(sr):
+            # For direct pin control (8:pin14, 9:pin15), write the angle directly (0-180)
+            # 1023/180 ≈ 5.683, but we use integer math for efficiency: (a * 1023 + 90) // 180
+            set_servo_angle(pin, a)
 
     # control the LED lights on the i2C expansion board
     def set_light(self, light):
