@@ -5,16 +5,13 @@ import random
 import time
 import neopixel
 from WK import *
-from MakeRadio import *
 from MusicLib import *
 from HCSR04 import *
 from Parameters import *
 from Content import *
-import os
 import gc
-
-pr = Parameters()
-wk = WK()
+from microbit import ble as bluetooth
+from ble_uart_peripheral import BLEUART
 
 class RobotPu(object):
     """
@@ -22,6 +19,7 @@ class RobotPu(object):
     
     Handles robot movement, state management, sensor processing, and communication.
     """
+
     def __init__(self, sn, name="peu"):
         """
         Initialize the RobotPu instance.
@@ -106,9 +104,6 @@ class RobotPu(object):
         # Audio and speech
         self.s_list = []          # Phoneme list for speech synthesis
         
-        # Radio communication
-        self.groupID = 166        # Default radio group ID
-        
         # Initialize hardware components
         self.read_config()        # Load configuration from file
         self.c = Content()        # Speech content manager
@@ -124,6 +119,12 @@ class RobotPu(object):
         self.sound_threshold = 116  # Sound detection threshold
         microphone.set_threshold(SoundEvent.LOUD, self.sound_threshold)
         speaker.on()              # Enable speaker
+        
+        # BLE initialization
+        self.ble = bluetooth
+        self.ble_uart = None
+        self.ble_msg = ""
+        self.init_ble(name=self.name, cb=self.ble_cb)
         
         # State index to function mapping
         self.st_dict = {
@@ -143,11 +144,63 @@ class RobotPu(object):
             "#puturn" : self.turn,
             "#puroll" : self.roll,
             "#pupitch" : self.pitch,
-            "#puB" : self.button,
+            "#pue" : self.explore,
+            "#pud" : self.dance,
             "#pulogo" : self.logo,
-            "#purs" : self.pose
+            "#purp" : self.pose,
+            "#purt" : self.talk,
+            "#purs" : self.sing,
+            "#purn" : self.set_name,
+            "#purr" : self.rest,
+            "#purj" : self.jump,
+            "#purk" : self.kick
         }
 
+    def init_ble(self):
+        """Initialize Bluetooth Low Energy (BLE) for wireless communication."""
+        try:
+            # Initialize BLE UART service
+            self.ble_uart = BLEUART(self.name, self.ble_cb)
+            display.show(Image.HAPPY)
+        except Exception as e:
+            display.show(Image.SAD)
+            print("BLE Init Error:", e)
+    
+    # In PuBot.py
+    def ble_cb(self):
+        # Process any received data
+        while self.ble_uart.any():
+            # Handle incoming data
+            self.ble_msg += self.ble_uart.read().decode('utf-8', 'ignore').strip()
+        # Process all complete commands (separated by newlines)
+        while '\n' in self.ble_msg:
+            # Split at first newline
+            msg, self.ble_msg = self.ble_msg.split('\n', 1)
+            # Process the command if it's not empty
+            if msg.strip():
+                self.process_ble_command(msg.strip())
+    
+    def process_ble_command(self, command):
+        """Process incoming BLE commands."""
+        try:
+            parts = command.strip().split(' ', 1)
+            cmd = parts[0].upper()
+            args = parts[1] if len(parts) > 1 else ""
+            if cmd in self.cmd_dict:
+                self.cmd_dict.get(cmd, self.noop)(args)
+            else:
+                self.ble_send("ERROR: Unknown command")
+        except Exception as e:
+            self.ble_send(f"ERROR: {str(e)}")
+    
+    def ble_send(self, message):
+        """Send data over BLE if connected."""
+        if self.ble_uart and self.ble_uart.ch is not None:
+            try:
+                self.ble_uart.write(f"{message}\n")
+            except Exception as e:
+                print("BLE Send Error:", e)
+    
     # read config from the pu.txt file
     def read_config(self):
         """
@@ -185,7 +238,6 @@ class RobotPu(object):
     #     """
     #     try:
     #         microfs.rm('pu.txt')
-    #         #os.remove('pu.txt')
     #     except:
     #         print("pu.txt not found")
     #     with open("pu.txt", 'w') as f:
@@ -193,39 +245,6 @@ class RobotPu(object):
     #         f.write(str(self.groupID) + "\n")
     #         # f.write(','.join([str(i) for i in self.p.s_tr]))
 
-    # set radio channel
-    def set_group(self, g):
-        """
-        Set the radio communication group/channel.
-        
-        Args:
-            g (int): The group ID to set (0-255).
-        """
-        self.groupID = g
-        self.show_channel()
-        self.ro = MakeRadio(self.groupID)
-
-    # show radio channel on the microbit display
-    def show_channel(self):
-        """
-        Display the current radio channel on the micro:bit LED display.
-        
-        Note: The displayed value is (groupID - 160) to fit the 0-95 range
-        that can be shown on the 5x5 LED matrix.
-        """
-        display.show(self.groupID - 160)
-
-    # increment radio channel
-    def incr_group_id(self, i):
-        """
-        Adjust the radio group ID by a specified amount.
-        
-        Args:
-            i (int): Amount to adjust the group ID by (can be negative).
-            The group ID will wrap around at 0 and 255.
-        """
-        self.groupID = (self.groupID + i) % 256
-        self.set_group(self.groupID)
 
     # make the robot stand in neutral position
     def stand(self):
@@ -655,7 +674,7 @@ class RobotPu(object):
         self.ro.send_str(":".join(["#puc", self.sn, code]))
 
     # process radio commands, change robot states
-    def process_radio_cmd(self):
+    def process_cmd(self):
         """
         Process incoming radio commands and update robot behavior accordingly.
         
@@ -742,7 +761,6 @@ class RobotPu(object):
                 if self.gst == -3:  # If recovering
                     self.gst = self.last_state  # Return to previous state
                     self.talk("Thanks")  # Acknowledge recovery
-                    #self.show_channel()  # Update display
 
     # state machine
     def state_machine(self):
@@ -798,7 +816,7 @@ class RobotPu(object):
         while True:
             try:
                 # Process any incoming radio commands
-                self.process_radio_cmd()
+                self.process_cmd()
                 
                 # Update robot states based on current conditions
                 self.set_states()
