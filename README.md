@@ -1,4 +1,4 @@
-# Pu Robot Project
+# Robot PU Project
 
 ![Pu Robot](https://robotgyms.com/wp-content/uploads/2025/05/amazon-main-page-3.png)
 

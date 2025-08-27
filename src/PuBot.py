@@ -393,7 +393,7 @@ class RobotPu(object):
         sl = microphone.sound_level()
         pr.st_tg[self.r_st][5]=90-sl*0.3
         return self.move([self.r_st], [0, 1, 2, 3, 4, 5],
-                         1 + sl*0.01,
+                         1 + sl*0.001,
                          [], 0.5)
 
     # make the robot walk with self-balance
@@ -493,7 +493,7 @@ class RobotPu(object):
         if math.fabs(ft)<8:
             ft =0
         lt = ft + self.dance_l_itv
-        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.1])
+        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.001])
         self.d_sp = min(2.5, self.d_sp * 1.015)
         if self.max_g > 1800:
             self.d_sp *= 0.9
@@ -565,6 +565,7 @@ class RobotPu(object):
             if math.fabs(self.di) > 0.9:
                 self.side_step(self.di)
         else:
+            self.walk(self.sp, self.di)
             self.walk(self.sp, self.di)
 
     # check if the robot should wake up
