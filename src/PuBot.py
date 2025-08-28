@@ -11,7 +11,8 @@ from Parameters import *
 from Content import *
 import gc
 from microbit import ble as bluetooth
-from ble_uart_peripheral import BLEUART
+from ble_uart import BLEUART
+
 
 class RobotPu(object):
     """
@@ -36,96 +37,96 @@ class RobotPu(object):
         - Behavior patterns
         """
         # Robot identification and basic settings
-        self.name = name          # User-assigned robot name
-        self.sn = sn              # Unique serial number for the robot
-        
+        self.name = name  # User-assigned robot name
+        self.sn = sn  # Unique serial number for the robot
+
         # State machine control
-        self.gst = 0              # Current state machine state index
-        
+        self.gst = 0  # Current state machine state index
+
         # Motion control parameters
-        self.last_cmd_ts = 0      # Timestamp of last received command (ms)
-        self.fw_sp = 6         # Forward speed multiplier
-        self.bw_sp = -3           # Backward speed multiplier
-        self.sp = 0.0             # Current speed setting
-        self.di = 0.0             # Current direction setting (degrees)
-        
+        self.last_cmd_ts = 0  # Timestamp of last received command (ms)
+        self.fw_sp = 6  # Forward speed multiplier
+        self.bw_sp = -3  # Backward speed multiplier
+        self.sp = 0.0  # Current speed setting
+        self.di = 0.0  # Current direction setting (degrees)
+
         # Head movement calibration
-        self.h_u_bias = 0         # Vertical bias for head positioning
-        self.h_l_bias = 0         # Horizontal bias for head positioning
-        
+        self.h_u_bias = 0  # Vertical bias for head positioning
+        self.h_l_bias = 0  # Horizontal bias for head positioning
+
         # Alert system parameters
-        self.alt_l = 10           # Alert level (sensitivity to environment)
-        self.alt_sc = 0.9         # Alert decay rate (0-1)
-        self.r_st = 26            # Index of rest state in state machine
-        
+        self.alt_l = 10  # Alert level (sensitivity to environment)
+        self.alt_sc = 0.9  # Alert decay rate (0-1)
+        self.r_st = 26  # Index of rest state in state machine
+
         # IMU and balance control
-        self.bd_pth = 0.0         # Current body pitch (degrees)
-        self.bd_pth2 = 0.0        # Previous body pitch (for filtering)
-        self.bd_rl = 0.0          # Current body roll (degrees)
-        self.bd_rl2 = 0.0         # Previous body roll (for filtering)
-        self.pth = 0.0            # Target pitch for balance control
-        self.rl = 0.0             # Target roll for balance control
-        self.max_g = 1.0          # Maximum detected acceleration (g)
-        self.g_thr = 2000         # Acceleration threshold for fall detection
-        self.max_pth_ctl = 15.0   # Maximum allowed pitch control output
-        self.max_rl_ctl = 15.0    # Maximum allowed roll control output
-        
+        self.bd_pth = 0.0  # Current body pitch (degrees)
+        self.bd_pth2 = 0.0  # Previous body pitch (for filtering)
+        self.bd_rl = 0.0  # Current body roll (degrees)
+        self.bd_rl2 = 0.0  # Previous body roll (for filtering)
+        self.pth = 0.0  # Target pitch for balance control
+        self.rl = 0.0  # Target roll for balance control
+        self.max_g = 1.0  # Maximum detected acceleration (g)
+        self.g_thr = 2000  # Acceleration threshold for fall detection
+        self.max_pth_ctl = 15.0  # Maximum allowed pitch control output
+        self.max_rl_ctl = 15.0  # Maximum allowed roll control output
+
         # Exploration behavior parameters
-        self.ep_sp = 0.0          # Exploration speed
-        self.ep_di = 0.0          # Exploration direction
-        self.ep_max_i = 0         # Index of clearest direction
-        self.ep_thr = 7.5         # Distance threshold for obstacle detection (cm)
-        self.ep_ot = 0            # Tilt offset during exploration
-        self.ep_far = 20          # Far distance threshold for obstacle detection (cm)  
-        
+        self.ep_sp = 0.0  # Exploration speed
+        self.ep_di = 0.0  # Exploration direction
+        self.ep_max_i = 0  # Index of clearest direction
+        self.ep_thr = 7.5  # Distance threshold for obstacle detection (cm)
+        self.ep_ot = 0  # Tilt offset during exploration
+        self.ep_far = 20  # Far distance threshold for obstacle detection (cm)
+
         # Fall recovery tracking
-        self.fell_count = 0       # Number of falls detected
-        self.last_state = 0       # State before falling
-        
+        self.fell_count = 0  # Number of falls detected
+        self.last_state = 0  # State before falling
+
         # Timing and synchronization
-        self.t_c = 0              # Last command timestamp
-        self.l_o_t = 0            # Left tilt offset
-        self.r_o_t = 0            # Right tilt offset
-        
+        self.t_c = 0  # Last command timestamp
+        self.l_o_t = 0  # Left tilt offset
+        self.r_o_t = 0  # Right tilt offset
+
         # Dance behavior configuration
-        self.d_st = [0]           # Current dance state
-        self.d_dict = {           # Predefined dance routines
+        self.d_st = [0]  # Current dance state
+        self.d_dict = {  # Predefined dance routines
             14: [0, 15, 15, 0, 3, 5, 3],  # Forward-backward movement
-            0: [0, 19, 0, 18, 0, 3],      # Side-to-side movement
-            5: [3, 5, 2, 5, 3],           # Quick steps
-            16: [17, 16, 17, 16, 17]      # Rocking motion
+            0: [0, 19, 0, 18, 0, 3],  # Side-to-side movement
+            5: [3, 5, 2, 5, 3],  # Quick steps
+            16: [17, 16, 17, 16, 17]  # Rocking motion
         }
-        self.d_sp = 1.5           # Dance speed multiplier
-        self.last_low_b = 0       # Timestamp of last low beat
-        self.last_high_b = 0      # Timestamp of last high beat
-        self.dance_l_itv = 12     # Left/right wiggle angle (degrees)
-        self.dance_u_itv = 15     # Up/down wiggle angle (degrees)
-        
+        self.d_sp = 1.5  # Dance speed multiplier
+        self.last_low_b = 0  # Timestamp of last low beat
+        self.last_high_b = 0  # Timestamp of last high beat
+        self.dance_l_itv = 12  # Left/right wiggle angle (degrees)
+        self.dance_u_itv = 15  # Up/down wiggle angle (degrees)
+
         # Audio and speech
-        self.s_list = []          # Phoneme list for speech synthesis
-        
+        self.s_list = []  # Phoneme list for speech synthesis
+
         # Initialize hardware components
-        self.read_config()        # Load configuration from file
-        self.c = Content()        # Speech content manager
-        self.music = MusicLib()   # Music and sound effects
-        self.sonar = HCSR04()     # Ultrasonic distance sensor
+        self.read_config()  # Load configuration from file
+        self.c = Content()  # Speech content manager
+        self.music = MusicLib()  # Music and sound effects
+        self.sonar = HCSR04()  # Ultrasonic distance sensor
         self.np = neopixel.NeoPixel(pin16, 4)  # LED control
-        
+
         # Initialize communication
         self.set_group(self.groupID)
-        
+
         # Initialize sensors and outputs
-        wk.eyes_ctl(1)            # Turn on eyes
+        wk.eyes_ctl(1)  # Turn on eyes
         self.sound_threshold = 116  # Sound detection threshold
         microphone.set_threshold(SoundEvent.LOUD, self.sound_threshold)
-        speaker.on()              # Enable speaker
-        
+        speaker.on()  # Enable speaker
+
         # BLE initialization
         self.ble = bluetooth
         self.ble_uart = None
         self.ble_msg = ""
         self.init_ble(name=self.name, cb=self.ble_cb)
-        
+
         # State index to function mapping
         self.st_dict = {
             -3: self.fall,
@@ -137,24 +138,27 @@ class RobotPu(object):
             4: self.kick,
             5: self.joystick
         }
-        
+
         # Radio command to function mapping
         self.cmd_dict = {
-            "#puspeed" : self.speed,
-            "#puturn" : self.turn,
-            "#puroll" : self.roll,
-            "#pupitch" : self.pitch,
-            "#pue" : self.explore,
-            "#pud" : self.dance,
-            "#pulogo" : self.logo,
-            "#purp" : self.pose,
-            "#purt" : self.talk,
-            "#purs" : self.sing,
-            "#purn" : self.set_name,
-            "#purr" : self.rest,
-            "#purj" : self.jump,
-            "#purk" : self.kick
+            "#puspeed": self.speed,
+            "#puturn": self.turn,
+            "#puroll": self.roll,
+            "#pupitch": self.pitch,
+            "#pue": self.explore,
+            "#pud": self.dance,
+            "#pulogo": self.logo,
+            "#purp": self.pose,
+            "#purt": self.talk,
+            "#purs": self.sing,
+            "#purn": self.set_name,
+            "#purr": self.rest,
+            "#purj": self.jump,
+            "#purk": self.kick
         }
+
+    def set_name(self, name):
+        self.name = name
 
     def init_ble(self):
         """Initialize Bluetooth Low Energy (BLE) for wireless communication."""
@@ -165,7 +169,7 @@ class RobotPu(object):
         except Exception as e:
             display.show(Image.SAD)
             print("BLE Init Error:", e)
-    
+
     # In PuBot.py
     def ble_cb(self):
         # Process any received data
@@ -179,28 +183,35 @@ class RobotPu(object):
             # Process the command if it's not empty
             if msg.strip():
                 self.process_ble_command(msg.strip())
-    
+
     def process_ble_command(self, command):
-        """Process incoming BLE commands."""
+        """
+        Process incoming BLE commands.
+
+        Takes a full command string, splits it into a command and arguments,
+        and calls the corresponding command function if it exists.
+
+        :param command: The full command string as received over BLE
+        """
         try:
+            # Split the command into its name and arguments
             parts = command.strip().split(' ', 1)
             cmd = parts[0].upper()
             args = parts[1] if len(parts) > 1 else ""
-            if cmd in self.cmd_dict:
-                self.cmd_dict.get(cmd, self.noop)(args)
-            else:
-                self.ble_send("ERROR: Unknown command")
+            # Call the command function if it exists
+            self.cmd_dict.get(cmd, self.noop)(args)
         except Exception as e:
-            self.ble_send(f"ERROR: {str(e)}")
-    
-    def ble_send(self, message):
+            # Ignore any exceptions that occur during command processing
+            pass
+
+    def ble_send(self, m):
         """Send data over BLE if connected."""
         if self.ble_uart and self.ble_uart.ch is not None:
             try:
-                self.ble_uart.write(f"{message}\n")
+                self.ble_uart.write(f"{m}\n")
             except Exception as e:
                 print("BLE Send Error:", e)
-    
+
     # read config from the pu.txt file
     def read_config(self):
         """
@@ -245,7 +256,6 @@ class RobotPu(object):
     #         f.write(str(self.groupID) + "\n")
     #         # f.write(','.join([str(i) for i in self.p.s_tr]))
 
-
     # make the robot stand in neutral position
     def stand(self):
         """
@@ -281,10 +291,10 @@ class RobotPu(object):
         self.intro()
         for i in range(3):
             wk.flash(1020)  # Bright flash
-            sleep(500)      # Half second delay between flashes
-        wk.eyes_ctl(1)      # Turn eyes on
+            sleep(500)  # Half second delay between flashes
+        wk.eyes_ctl(1)  # Turn eyes on
         wk.servo_move(0, pr)  # Return to neutral position
-        sleep(2000)         # Wait for movement to complete
+        sleep(2000)  # Wait for movement to complete
 
     # make the robot fetal position
     def fetal(self):
@@ -354,23 +364,23 @@ class RobotPu(object):
         """
         sts = fw_l if sp > 0 else bw_l
         self.balance_param()
-        
+
         if wk.pos < 2 or wk.pos == 6:  # left side
-            self.l_o_t = min(self.max_rl_ctl, max(0.0, self.bd_rl*0.8 - pr.w_t))
+            self.l_o_t = min(self.max_rl_ctl, max(0.0, self.bd_rl * 0.8 - pr.w_t))
             lf = -12 * di
         else:  # right side
-            self.r_o_t = max(-self.max_rl_ctl, min(0.0, self.bd_rl*0.8 + pr.w_t))
+            self.r_o_t = max(-self.max_rl_ctl, min(0.0, self.bd_rl * 0.8 + pr.w_t))
             lf = 12 * di
-            
+
         # Calculate overall tilt compensation
         o_t = self.l_o_t + self.r_o_t
 
         # stability compensation of speed
-        sp /= 1.0 + 0.01 * (abs(self.bd_rl) + abs(self.bd_pth))+ math.sqrt(math.fabs(o_t * 0.5))
-        
+        sp /= 1.0 + 0.01 * (abs(self.bd_rl) + abs(self.bd_pth)) + math.sqrt(math.fabs(o_t * 0.5))
+
         # Apply control to servos
         self.set_ct([0, 1, 2, 3, 4, 5],
-                   [o_t, lf - o_t, o_t, -lf - o_t, -40 * di - o_t, min(25.0, -2.0 * self.bd_pth2)])
+                    [o_t, lf - o_t, o_t, -lf - o_t, -40 * di - o_t, min(25.0, -2.0 * self.bd_pth2)])
         return self.move(sts, [0, 1, 2, 3], sp, [4, 5], sp)
 
     # calculate balance parameters from IMU data
@@ -388,15 +398,15 @@ class RobotPu(object):
         self.pth = math.degrees(math.atan2(a[1], -a[2]))
         self.max_g = math.sqrt(sum(x * x for x in a))
         self.rl = math.degrees(math.asin(a[0] / self.max_g)) if self.max_g > 0 else 0.0
-        
+
         # Calculate body-relative angles with servo trim compensation
         bd_p = self.pth + (pr.st_tg[0][5] + pr.s_tr[5] - pr.s_tg[5])
         servo_lft = math.radians(pr.s_tg[4] - pr.st_tg[0][4] - pr.s_tr[4])
-        
+
         # Update filtered body orientation with low-pass filter
         self.bd_rl = bd_p * math.sin(servo_lft) + self.rl * math.cos(servo_lft)
         self.bd_rl2 = (self.bd_rl + 9 * self.bd_rl2) * 0.1  # Low-pass filter
-        
+
         self.bd_pth = bd_p * math.cos(servo_lft) - self.rl * math.sin(servo_lft)
         self.bd_pth2 = (self.bd_pth + 9 * self.bd_pth2) * 0.1  # Low-pass filter
 
@@ -404,15 +414,15 @@ class RobotPu(object):
     def rest(self):
         self.balance_param()
         rl = min(35.0, max(-35.0, self.bd_rl2))
-        if abs(rl)> 5:
+        if abs(rl) > 5:
             self.set_ct([0, 1, 2, 3, 4],
-                       [rl, rl * -1.0, rl, rl * -1.0, rl * -0.5])
+                        [rl, rl * -1.0, rl, rl * -1.0, rl * -0.5])
         if math.fabs(self.bd_pth2) > 12:
             self.set_ct([5], [-self.bd_pth2])
         sl = microphone.sound_level()
-        pr.st_tg[self.r_st][5]=90-sl*0.3
+        pr.st_tg[self.r_st][5] = 90 - sl * 0.3
         return self.move([self.r_st], [0, 1, 2, 3, 4, 5],
-                         1 + sl*0.01,
+                         1 + sl * 0.01,
                          [], 0.5)
 
     # make the robot walk with self-balance
@@ -439,45 +449,46 @@ class RobotPu(object):
         """
         if not ep_dis:
             return 0.0
-        
+
         # Calculate center of mass of the distances
         tw = sum(ep_dis)
         if tw == 0:
             return 0.0
-        
+
         # Calculate normalized position from -1 (left) to 1 (right)
         pos = [i * 2 / (len(ep_dis) - 1) - 1 for i in range(len(ep_dis))] if len(ep_dis) > 1 else [0]
         # calculate center of mass
         cm = sum(d * p for d, p in zip(ep_dis, pos)) / tw
-        
+
         # Apply turn aggressiveness and clamp to [-1, 1]
         d = cm * turn_gain
         return max(-1.0, min(1.0, d))
-    
+
     # compute auto-pilot parameters for explore mode
     def set_explore_param(self):
         obs_hcsr = min(pr.ep_dis[pr.ep_mid1], pr.ep_dis[pr.ep_mid2])
         if obs_hcsr < self.ep_thr + self.ep_far:
             # max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
             # self.ep_di = (self.ep_di*3+pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2))*0.25
-            nd = self.get_turn_from_sonar(pr.ep_dis[pr.ep_mid1:pr.ep_mid2+1], 3)
+            nd = self.get_turn_from_sonar(pr.ep_dis[pr.ep_mid1:pr.ep_mid2 + 1], 3)
         else:
-            #self.ep_di = (self.ep_di*3+min(1.0, max(-1.0, (pr.ep_dis[pr.ep_mid2] - pr.ep_dis[pr.ep_mid1]) / (pr.ep_dis[pr.ep_mid2] + pr.ep_dis[pr.ep_mid1]) * 1.5)))*0.25
+            # self.ep_di = (self.ep_di*3+min(1.0, max(-1.0, (pr.ep_dis[pr.ep_mid2] - pr.ep_dis[pr.ep_mid1]) / (pr.ep_dis[pr.ep_mid2] + pr.ep_dis[pr.ep_mid1]) * 1.5)))*0.25
             nd = self.get_turn_from_sonar(pr.ep_dis, 5)
         obs_hcsr = min(pr.ep_dis)
         dis = (obs_hcsr - self.ep_thr)
         if self.ep_sp < 0:
             # stuck in corner, turn aggrassively
             nd = 1 if nd > 0 else -1
-            self.ep_di = (self.ep_di*9+nd)*0.1
+            self.ep_di = (self.ep_di * 9 + nd) * 0.1
             dis -= 12 + random.randint(-5, 0)
             if random.randint(0, 400) == 0:
                 self.talk(self.c.sentences[5])
                 self.ro.send_str("#puc:" + self.sn + ":W1")
         else:
-            self.ep_di = (self.ep_di*3+nd)*0.25
+            self.ep_di = (self.ep_di * 3 + nd) * 0.25
         # apply low-pass filter to speed
-        self.ep_sp = (self.ep_sp+min(self.fw_sp, (dis + 5) * 0.8) if dis >= 0 else max(self.bw_sp, (dis - 5) * 0.6))*0.5
+        self.ep_sp = (self.ep_sp + min(self.fw_sp, (dis + 5) * 0.8) if dis >= 0 else max(self.bw_sp,
+                                                                                         (dis - 5) * 0.6)) * 0.5
 
     # make the robot explore with self-balance
     def explore(self):
@@ -494,6 +505,7 @@ class RobotPu(object):
         for p in range(0, 4):
             self.np[p] = (random.randint(0, 128), random.randint(0, 128), random.randint(0, 128))
         self.np.show()
+
     # make the robot dance with self-balance
     def dance(self):
         ts = time.ticks_ms()
@@ -509,10 +521,10 @@ class RobotPu(object):
             self.last_low_b = ts
         self.balance_param()
         ft = min(12.0, max(-12.0, self.rl * 0.8 + self.dance_l_itv * 0.2))
-        if math.fabs(ft)<8:
-            ft =0
+        if math.fabs(ft) < 8:
+            ft = 0
         lt = ft + self.dance_l_itv
-        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.1])
+        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv - ms * 0.1])
         self.d_sp = min(2.5, self.d_sp * 1.015)
         if self.max_g > 1800:
             self.d_sp *= 0.9
@@ -554,10 +566,12 @@ class RobotPu(object):
                 self.alt_l -= 2
                 self.state_talk()
                 self.ro.send_str("#puhi, " + self.sn + " " + self.name)
-            if random.randint(0, 280- sl)== 0 or sl> self.sound_threshold*3:
-                pr.st_tg[26][4] = random.randint(30, 160) #min(160, max(20, self.p.st_tg[26][4]+random.randint(-10, 10)))
-                pr.st_tg[26][5] = random.randint(40, 105) #min(115, max(30, self.p.st_tg[26][5]+random.randint(-10, 10)))
-            if sl> self.sound_threshold*2.5:
+            if random.randint(0, 280 - sl) == 0 or sl > self.sound_threshold * 3:
+                pr.st_tg[26][4] = random.randint(30,
+                                                 160)  # min(160, max(20, self.p.st_tg[26][4]+random.randint(-10, 10)))
+                pr.st_tg[26][5] = random.randint(40,
+                                                 105)  # min(115, max(30, self.p.st_tg[26][5]+random.randint(-10, 10)))
+            if sl > self.sound_threshold * 2.5:
                 self.talk(self.c.cute_words())
 
     # make the robot sleep
@@ -614,7 +628,7 @@ class RobotPu(object):
         pass
 
     # control the speed of the robot
-    def speed (self, v:float):
+    def speed(self, v: float):
         if v > 0.1:
             self.sp = v * self.fw_sp
             self.gst = 5
@@ -625,19 +639,19 @@ class RobotPu(object):
             self.sp = 0
 
     # control the direction of the robot
-    def turn(self, v:float):
-        self.di = (self.di*4 + v) * 0.2
+    def turn(self, v: float):
+        self.di = (self.di * 4 + v) * 0.2
 
     # control the roll of the robot
-    def roll(self, v:float):
+    def roll(self, v: float):
         self.h_l_bias = (v + self.h_l_bias) * 0.5
 
     # control the pitch of the robot
-    def pitch(self, v:float):
+    def pitch(self, v: float):
         self.h_u_bias = (v * -1 + self.h_u_bias) * 0.5
 
     # switch robot state with buttion events
-    def button(self, v:int):
+    def button(self, v: int):
         if v == 0:
             self.gst = 0
             self.h_u_bias = 0
@@ -660,11 +674,11 @@ class RobotPu(object):
             self.gst = 4
 
     # robot actions when the logo button is pressed
-    def logo (self, v):
+    def logo(self, v):
         self.state_talk()
 
     # control the pose of the robot during rest
-    def pose (self, v:int):
+    def pose(self, v: int):
         self.r_st = v
         self.gst = 0
         self.rest()
@@ -691,7 +705,7 @@ class RobotPu(object):
         d = self.ro.receive_packet()
         if d is None:
             return
-            
+
         if isinstance(d, tuple):
             # Handle command tuples (from cmd_dict)
             self.last_cmd_ts = time.ticks_ms()
@@ -735,19 +749,19 @@ class RobotPu(object):
         # Check for free-fall condition
         if accelerometer.was_gesture("freefall"):
             self.gst = -2  # Enter fall state
-            
+
         # Handle button presses for group ID changes
         if button_a.was_pressed():
             self.incr_group_id(1)
         if button_b.was_pressed():
             self.incr_group_id(-1)
-            
+
         # Handle automatic state transitions
         if self.gst > 0:  # If in any active state
             self.alt_l = 10  # Reset alert level
             if time.ticks_ms() - self.last_cmd_ts > 2000:  # 2s timeout
                 self.gst = 0  # Return to idle
-                
+
         # Check balance and adjust if needed
         if self.gst != -2:  # If not in fall state
             if abs(self.bd_rl2) > 75 or abs(self.bd_pth2) > 75:  # Check tilt thresholds
@@ -786,7 +800,7 @@ class RobotPu(object):
         """
         # Execute the current state's behavior
         self.st_dict.get(self.gst, self.sleep)()
-        
+
         # Handle blinking and state tracking
         if self.gst >= 0:  # If in a normal state
             wk.blink(self.alt_l)  # Update eye blink animation
@@ -817,17 +831,17 @@ class RobotPu(object):
             try:
                 # Process any incoming radio commands
                 self.process_cmd()
-                
+
                 # Update robot states based on current conditions
                 self.set_states()
-                
+
                 # Execute the current state's behavior
                 self.state_machine()
-                
+
                 # Optional: Uncomment for memory usage monitoring
                 if random.randint(0, 200) == 0: gc.collect()
                 # print(time.ticks_ms(), gc.mem_alloc(), gc.mem_free())
-                
+
             except Exception as e:
                 # Log errors and attempt to recover
                 print(e)
