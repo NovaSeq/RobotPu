@@ -168,7 +168,7 @@ class RobotPu(object):
             display.show(Image.HAPPY)
         except Exception as e:
             display.show(Image.SAD)
-            print("BLE Init Error:", e)
+            print(e)
 
     # In PuBot.py
     def ble_cb(self):
@@ -202,15 +202,15 @@ class RobotPu(object):
             self.cmd_dict.get(cmd, self.noop)(args)
         except Exception as e:
             # Ignore any exceptions that occur during command processing
-            pass
+            print(e) # pass
 
     def ble_send(self, m):
         """Send data over BLE if connected."""
         if self.ble_uart and self.ble_uart.ch is not None:
             try:
-                self.ble_uart.write(f"{m}\n")
+                self.ble_uart.write(m + "\n")
             except Exception as e:
-                print("BLE Send Error:", e)
+                pass
 
     # read config from the pu.txt file
     def read_config(self):
@@ -233,9 +233,9 @@ class RobotPu(object):
                 # Copy elements from a into b, preserving extra items in b
                 for i in range(min(len(pr.s_tr), len(t))):
                     pr.s_tr[i] = t[i]
-        except Exception:
+        except Exception as e:
             # Silently continue with default values if config can't be read
-            pass
+            print(e)
 
     #
     # def write_config (self):
