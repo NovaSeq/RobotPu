@@ -11,7 +11,7 @@ Welcome to the Pu Robot project! This repository contains the MicroPython code a
 - **Interactive Companion**: Walks, dances, and navigates with auto-pilot
 - **AI Capabilities**: Chat, compose music, and learn new skills
 - **Programmable**: Customize Pu's behavior with MicroPython
-- **Expandable**: Add new features and capabilities through programming
+- **Expandable**: Add new features and capabilities through programming and 3D printing
 - **Community-Driven**: Share and download custom programs and modifications
 
 ## 🛠 Project Structure
@@ -22,6 +22,8 @@ Welcome to the Pu Robot project! This repository contains the MicroPython code a
 ├── requirements.txt    # Python dependencies
 ├── src/                # Source code
 │   └── main.py         # Main application code
+├── 3dModels            # 3D models for 3D printing to upgrade PU
+├── gamepad             # Make code hex for gamepad programs
 ├── lib/                # External libraries
 ├── tests/              # Test files
 └── utils/              # Utility scripts
