@@ -165,7 +165,10 @@ class RobotPu(object):
                 c = f.read().split('\n')
                 self.sn = c[0]
                 self.groupID = int(c[1])
-                pr.s_tr = [float(i) for i in c[2].split(',')]
+                t = [float(i) for i in c[2].split(',')]
+                # Copy elements from a into b, preserving extra items in b
+                for i in range(min(len(pr.s_tr), len(t))):
+                    pr.s_tr[i] = t[i]
         except Exception:
             # Silently continue with default values if config can't be read
             pass
@@ -390,7 +393,7 @@ class RobotPu(object):
         sl = microphone.sound_level()
         pr.st_tg[self.r_st][5]=90-sl*0.3
         return self.move([self.r_st], [0, 1, 2, 3, 4, 5],
-                         1 + sl*0.01,
+                         1 + sl*0.001,
                          [], 0.5)
 
     # make the robot walk with self-balance
@@ -490,7 +493,7 @@ class RobotPu(object):
         if math.fabs(ft)<8:
             ft =0
         lt = ft + self.dance_l_itv
-        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.1])
+        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.001])
         self.d_sp = min(2.5, self.d_sp * 1.015)
         if self.max_g > 1800:
             self.d_sp *= 0.9
@@ -530,13 +533,12 @@ class RobotPu(object):
             self.sound_threshold = (self.sound_threshold * 24 + sl) * 0.04
             if random.randint(0, 1000) == 0:
                 self.alt_l -= 2
-                self.state_talk()
                 self.ro.send_str("#puhi, " + self.sn + " " + self.name)
             if random.randint(0, 280- sl)== 0 or sl> self.sound_threshold*3:
                 pr.st_tg[26][4] = random.randint(30, 160) #min(160, max(20, self.p.st_tg[26][4]+random.randint(-10, 10)))
                 pr.st_tg[26][5] = random.randint(40, 105) #min(115, max(30, self.p.st_tg[26][5]+random.randint(-10, 10)))
-            if sl> self.sound_threshold*2.5:
-                self.talk(self.c.cute_words())
+            if sl> self.sound_threshold*4:
+                self.state_talk()
 
     # make the robot sleep
     def sleep(self):
@@ -563,6 +565,7 @@ class RobotPu(object):
                 self.side_step(self.di)
         else:
             self.walk(self.sp, self.di)
+            self.walk(self.sp, self.di)
 
     # check if the robot should wake up
     def check_wakeup(self):
@@ -580,6 +583,8 @@ class RobotPu(object):
         rt = random.randint(0, 5)
         if rt == 0:
             self.sing(self.c.compose_song())
+        if rt == 1:
+            self.talk(self.c.cute_words())
         else:
             self.talk(random.choice(["Hello! I am " + self.sn + " " + self.name + ". ",
                                      random.choice(self.c.sentences),
@@ -669,7 +674,6 @@ class RobotPu(object):
         d = self.ro.receive_packet()
         if d is None:
             return
-            
         if isinstance(d, tuple):
             # Handle command tuples (from cmd_dict)
             self.last_cmd_ts = time.ticks_ms()
