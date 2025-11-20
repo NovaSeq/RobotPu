@@ -537,8 +537,8 @@ class RobotPu(object):
             if random.randint(0, 280- sl)== 0 or sl> self.sound_threshold*3:
                 pr.st_tg[26][4] = random.randint(30, 160) #min(160, max(20, self.p.st_tg[26][4]+random.randint(-10, 10)))
                 pr.st_tg[26][5] = random.randint(40, 105) #min(115, max(30, self.p.st_tg[26][5]+random.randint(-10, 10)))
-            if sl> self.sound_threshold*4:
-                self.state_talk()
+            #if sl> self.sound_threshold*8:
+            #self.state_talk()
 
     # make the robot sleep
     def sleep(self):

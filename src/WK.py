@@ -63,8 +63,8 @@ class WK(object):
             light (int): Light intensity or pattern value
         """
         i2c.write(WK_ADDR, bytearray([0x12, light, 0, 0]))
-        sleep(100)
-        i2c.write(WK_ADDR, bytearray([0x11, 160, 0, 0]))
+        #sleep(100)
+        #i2c.write(WK_ADDR, bytearray([0x11, 160, 0, 0]))
 
     # move servo motor toward the target angle with step
     def servo_step(self, target, sp, idx: int, p: Parameters):
