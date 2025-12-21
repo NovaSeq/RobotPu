@@ -9,8 +9,6 @@ function ringBufferIdx (m: number, icr: number, size: number) {
 }
 
 let result = 0
-let now = 0
-let micLoudness = 0
 let pitch = 0
 let pulseDelay = 0
 class Parameters {
