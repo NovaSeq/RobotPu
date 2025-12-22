@@ -1,3 +1,7 @@
+// need following microbit extensions:
+// 1. https://github.com/adamish/pxt-billy.git
+// 2. neopixel
+
 // Ported MusicLib for beat detection on micro:bit
 function ringBufferIdx (m: number, icr: number, size: number) {
     result = (m + icr) % size
