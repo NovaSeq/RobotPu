@@ -565,7 +565,6 @@ class RobotPu(object):
                 self.side_step(self.di)
         else:
             self.walk(self.sp, self.di)
-            self.walk(self.sp, self.di)
 
     # check if the robot should wake up
     def check_wakeup(self):

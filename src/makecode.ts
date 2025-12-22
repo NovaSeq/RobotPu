@@ -410,8 +410,8 @@ class WK {
         let err = target - p.s_tg[idx];
         p.s_err[idx] = err;
 
-        if (Math.abs(err) < sp) {
-            p.s_tg[idx] += err;
+        if (Math.abs(err) <= sp) {
+            p.s_tg[idx] = target;
         } else {
             p.s_tg[idx] += (err >= 0) ? sp : -sp;
         }
@@ -676,9 +676,9 @@ class RobotPu {
     }
 
     /**
-     * Handles manual movement and stance control from a remote.
-     * Ported from joystick() in Python.
-     */
+ * Handles manual movement and stance control from a remote.
+ * Ported from joystick() in Python.
+ */
     public joystick(): number {
         // 1. If speed is near zero, handle stationary behavior
         if (Math.abs(this.sp) < 0.1) {
@@ -701,13 +701,13 @@ class RobotPu {
     }
 
     /**
-     * Executes a side-stepping (lateral) movement.
-     * @param di Directional bias: positive for right, negative for left.
-     */
+ * Executes a side-stepping (lateral) movement.
+ * @param di Directional bias: positive for right, negative for left.
+ */
     /**
-     * Executes a side-stepping movement using specific state indices.
-     * @param di Directional bias: positive for right, negative for left.
-     */
+ * Executes a side-stepping movement using specific state indices.
+ * @param di Directional bias: positive for right, negative for left.
+ */
     public side_step(di: number): number {
         // 1. Select the gait state sequence based on direction
         // Python: [20, 22, 0, 19] if di > 0 else [18, 21, 23, 0]
@@ -741,10 +741,10 @@ class RobotPu {
     }
 
     /**
-     * Triggers the balanced walking gait.
-     * @param sp Speed (positive for forward, negative for backward)
-     * @param di Directional bias (-1.0 to 1.0)
-     */
+ * Triggers the balanced walking gait.
+ * @param sp Speed (positive for forward, negative for backward)
+ * @param di Directional bias (-1.0 to 1.0)
+ */
     public walk(sp: number, di: number): number {
         return this.move_balance(sp, di, this.pr.walk_fw_sts, this.pr.walk_bw_sts);
     }
@@ -806,9 +806,9 @@ class RobotPu {
     }
 
     /**
-     * Update robot states based on sensor inputs.
-     * Ported from set_states() in Python.
-     */
+ * Update robot states based on sensor inputs.
+ * Ported from set_states() in Python.
+ */
     public update_states(): void {
         // 1. Fall detection using Accelerometer
         if (input.isGesture(Gesture.FreeFall)) {
@@ -867,9 +867,9 @@ class RobotPu {
     }
 
     /**
-     * Handles the robot's behavior when it has fallen and cannot recover.
-     * Ported from fall() in Python.
-     */
+ * Handles the robot's behavior when it has fallen and cannot recover.
+ * Ported from fall() in Python.
+ */
     public fall(): void {
         // 1. Trigger the "Knight Rider" style eye flash effect
         this.wk.flash();
@@ -885,9 +885,9 @@ class RobotPu {
     }
 
     /**
-     * Set the robot to a compact fetal position for protection or power saving.
-     * Ported from fetal() in Python.
-     */
+ * Set the robot to a compact fetal position for protection or power saving.
+ * Ported from fetal() in Python.
+ */
     public fetal(): void {
         // 1. Trigger the eye pulsing animation
         this.wk.flash();
@@ -903,9 +903,9 @@ class RobotPu {
     }
 
     /**
-     * Publishes a status or error code via radio.
-     * @param code The status/error code string (e.g., "E2", "OK", "BATT").
-     */
+ * Publishes a status or error code via radio.
+ * @param code The status/error code string (e.g., "E2", "OK", "BATT").
+ */
     public s_code(code: string): void {
         // 1. Construct the message string
         // Python equivalent: f"#puc:{self.sn}:{code}"
@@ -917,9 +917,9 @@ class RobotPu {
     }
 
     /**
-     * Calculates exploration speed and direction based on sonar point-cloud.
-     * Ported from set_explore_param() in Python.
-     */
+ * Calculates exploration speed and direction based on sonar point-cloud.
+ * Ported from set_explore_param() in Python.
+ */
     private set_explore_param(): void {
         // 1. Check for obstacles in the "middle" view of the point cloud
         let mid_view = [this.pr.ep_dis[this.pr.ep_mid1], this.pr.ep_dis[this.pr.ep_mid2]];
@@ -971,11 +971,11 @@ class RobotPu {
     }
 
     /**
-     * Map sonar distance readings to a steering direction for auto-pilot.
-     * @param ep_dis List of sonar distance readings from left to right
-     * @param turn_gain Scaling factor for turn intensity (default: 1.5)
-     * @returns Steering direction between -1.0 (left) and 1.0 (right)
-     */
+ * Map sonar distance readings to a steering direction for auto-pilot.
+ * @param ep_dis List of sonar distance readings from left to right
+ * @param turn_gain Scaling factor for turn intensity (default: 1.5)
+ * @returns Steering direction between -1.0 (left) and 1.0 (right)
+ */
     public get_turn_from_sonar(ep_dis: number[], turn_gain: number = 1.5): number {
         // 1. Guard against empty arrays
         if (ep_dis.length == 0) {
@@ -1014,9 +1014,9 @@ class RobotPu {
     }
 
     /**
-     * Autonomous exploration with obstacle point-cloud mapping.
-     * Updates the distance array and adjusts movement parameters.
-     */
+ * Autonomous exploration with obstacle point-cloud mapping.
+ * Updates the distance array and adjusts movement parameters.
+ */
     public explore(): number {
         // 1. Determine which index of the target states (s_tg) to check
         // Python: pr.s_tg[1 if wk.pos < 2 else 3]
@@ -1042,9 +1042,9 @@ class RobotPu {
     }
 
     /**
-     * Executes a specific jumping sequence and manages the auxiliary jump servo.
-     * Ported from jump() in Python.
-     */
+ * Executes a specific jumping sequence and manages the auxiliary jump servo.
+ * Ported from jump() in Python.
+ */
     public jump(): number {
         // 1. Execute the move sequence
         // states: [24, 14, 0, 0]
@@ -1075,9 +1075,9 @@ class RobotPu {
     }
 
     /**
-     * Executes a kick by accelerating the forward walking gait.
-     * Returns to joystick mode when the kick completes at specific gait positions.
-     */
+  * Executes a kick by accelerating the forward walking gait.
+  * Returns to joystick mode when the kick completes at specific gait positions.
+  */
     public kick(): number {
         // 1. Execute the forward walk states at high speed
         // legs: [0, 1, 2, 3] at speed 3, body/head: [4, 5] at speed 2
@@ -1101,9 +1101,9 @@ class RobotPu {
     }
 
     /**
-     * Set the robot to a neutral standing position.
-     * Ported from stand() in Python.
-     */
+ * Set the robot to a neutral standing position.
+ * Ported from stand() in Python.
+ */
     public stand(): number {
         // 1. Execute transition to neutral state (Index 0)
         // states: [0]
@@ -1122,9 +1122,9 @@ class RobotPu {
     }
 
     /**
-     * Monitors sensors to determine if the robot should exit sleep mode.
-     * @returns 1 if the robot should wake up, 0 otherwise.
-     */
+ * Monitors sensors to determine if the robot should exit sleep mode.
+ * @returns 1 if the robot should wake up, 0 otherwise.
+ */
     public check_wakeup(): number {
         // 1. Calculate tilt deltas (current vs filtered)
         let roll_delta = Math.abs(this.bd_rl - this.bd_rl2);
@@ -1152,9 +1152,9 @@ class RobotPu {
     }
 
     /**
-     * Puts the robot into a low-power standby mode.
-     * Ported from sleep() in Python.
-     */
+ * Puts the robot into a low-power standby mode.
+ * Ported from sleep() in Python.
+ */
     public sleep_mode(): void {
         // 1. Refresh IMU data and return to a neutral standing pose
         this.balance_param();
@@ -1205,20 +1205,20 @@ class RobotPu {
      * @param s The phonetic or musical string to be synthesized.
      */
     public sing(s: string): void {
-        billy.singShim(s)
+       billy.singShim(s)
     }
     /**
-     * Makes the robot introduce itself using text-to-speech.
-     * The robot will speak its serial number and name.
-     */
+ * Makes the robot introduce itself using text-to-speech.
+ * The robot will speak its serial number and name.
+ */
     public intro(): void {
         // 1. Combine the identification strings
         this.talk("My name is " + this.sn + " " + this.name);
     }
     /**
-     * Adjusts the radio group ID and updates the hardware settings.
-     * @param i The amount to adjust the group ID by (positive or negative).
-     */
+ * Adjusts the radio group ID and updates the hardware settings.
+ * @param i The amount to adjust the group ID by (positive or negative).
+ */
     public incr_group_id(i: number): void {
         // 1. Calculate the new group ID with 0-255 wrapping logic
         this.groupID = (this.groupID + i) % 256;
@@ -1235,9 +1235,9 @@ class RobotPu {
         this.show_channel();
     }
     /**
-     * Generates a random LED light show on the robot's NeoPixel strip.
-     * Ported from random_light() in Python.
-     */
+ * Generates a random LED light show on the robot's NeoPixel strip.
+ * Ported from random_light() in Python.
+ */
     private random_light(): void {
         // 1. Loop through the 4 pixels on the robot's strip
         for (let p = 0; p < 4; p++) {
@@ -1255,8 +1255,8 @@ class RobotPu {
         this.np.show();
     }
     /**
-     * Makes the robot dance with self-balance based on sound analysis.
-     */
+ * Makes the robot dance with self-balance based on sound analysis.
+ */
     public dance(): number {
         let ts = control.millis();
         let ms = input.soundLevel();
@@ -1303,7 +1303,17 @@ class RobotPu {
     }
 
     // Command Handlers
-    public speed(v: number) { this.sp = v * (v > 0 ? this.fw_sp : this.bw_sp); this.gst = 5; }
+    public speed(v: number) {
+        if (v > 0.2) {
+            this.sp = v * this.fw_sp;
+            this.gst = 5;
+        } else if (v < -0.2) {
+            this.sp = -v * this.bw_sp;
+            this.gst = 5;
+        } else {
+            this.sp = 0;
+        }
+    }
     public turn(v: number) { this.di = (this.di * 4 + v) * 0.2; }
     public roll(v: number) { this.h_l_bias = (v + this.h_l_bias) * 0.5; }
     public pitch(v: number) { this.h_u_bias = (v * -1 + this.h_u_bias) * 0.5; }
@@ -1316,7 +1326,7 @@ let robot = new RobotPu("SN_01", "Peu");
 basic.forever(function () {
     robot.update_states();
     robot.state_machine();
-    //basic.pause(20)
+    //basic.pause(10)
 })
 
 // Register the event listener for incoming string messages
