@@ -1,16 +1,4 @@
-// Ported MusicLib for beat detection on micro:bit
-function ringBufferIdx (m: number, icr: number, size: number) {
-    result = (m + icr) % size
-    if (result < 0) {
-        // Handle negative modulo in JS
-        result += size
-    }
-    return result
-}
 
-let result = 0
-let pitch = 0
-let pulseDelay = 0
 class Parameters {
     w_t: number;
     j_t: number;
@@ -46,7 +34,7 @@ class Parameters {
         this.s_tg = [90.0, 90.0, 90.0, 90.0, 90.0, 90.0];
 
         // Servo trim
-        this.s_tr = [-5, -0.0, -5, -0.0, -9.0, 0.0];
+        this.s_tr = [-7, -0.0, -7, -0.0, -9.0, 0.0];
 
         // Turning directions
         this.ep_dir = [-1.0, -0.7, 0.7, 1.0];
@@ -138,6 +126,16 @@ class MusicLib {
         this.hits = 0;
     }
 
+    // ring buffer index calculation
+    ringBufferIdx(m: number, icr: number, size: number) {
+        const result = (m + icr) % size
+        if (result < 0) {
+            // Handle negative modulo in JS
+            return result + size
+        }
+        return result
+    }
+
     /**
      * check if it is a beat, compute music period, and update threshold
      */
@@ -159,7 +157,7 @@ class MusicLib {
             this.last_idx = idx;
 
             // beat detection only when previous bucket is full
-            let cIdx = ringBufferIdx(idx, -2, this.buf_size);
+            let cIdx = this.ringBufferIdx(idx, -2, this.buf_size);
             let prevIdx = cIdx;
             let c = 0; // beat count
 
@@ -172,8 +170,8 @@ class MusicLib {
             let length = this.buf_size - 3;
 
             for (let j = 0; j < length; j++) {
-                let nl = ringBufferIdx(cIdx, -1, this.buf_size);
-                let nr = ringBufferIdx(cIdx, 1, this.buf_size);
+                let nl = this.ringBufferIdx(cIdx, -1, this.buf_size);
+                let nr = this.ringBufferIdx(cIdx, 1, this.buf_size);
 
                 if (this.buf[cIdx] > this.buf[nl] * snr &&
                     this.buf[cIdx] > this.buf[nr] * snr &&
@@ -330,8 +328,9 @@ class HCSR04 {
     }
 }
 // Configuration Constants
-let WK_ADDR = 16
+
 class WK {
+    public WK_ADDR: number;
     private last_bl_ts: number;
     private eye_on: boolean;
     private l_e_b: number;
@@ -345,6 +344,7 @@ class WK {
     public c_s: number;
 
     constructor() {
+        this.WK_ADDR = 16;
         this.last_bl_ts = 0;
         this.eye_on = true;
         this.l_e_b = 1023;
@@ -369,7 +369,7 @@ class WK {
             buf.setNumber(NumberFormat.UInt8LE, 1, 0x01);
             buf.setNumber(NumberFormat.Int8LE, 2, sp); // Signed speed
             buf.setNumber(NumberFormat.UInt8LE, 3, 0);
-            pins.i2cWriteBuffer(WK_ADDR, buf);
+            pins.i2cWriteBuffer(this.WK_ADDR, buf);
         }
     }
 
@@ -385,7 +385,7 @@ class WK {
             buf2.setNumber(NumberFormat.UInt8LE, 1, a);
             buf2.setNumber(NumberFormat.UInt8LE, 2, 0);
             buf2.setNumber(NumberFormat.UInt8LE, 3, 0);
-            pins.i2cWriteBuffer(WK_ADDR, buf2);
+            pins.i2cWriteBuffer(this.WK_ADDR, buf2);
         }
     }
 
@@ -398,7 +398,7 @@ class WK {
         buf3.setNumber(NumberFormat.UInt8LE, 1, light);
         buf3.setNumber(NumberFormat.UInt8LE, 2, 0);
         buf3.setNumber(NumberFormat.UInt8LE, 3, 0);
-        pins.i2cWriteBuffer(WK_ADDR, buf3);
+        pins.i2cWriteBuffer(this.WK_ADDR, buf3);
     }
 
     /**
@@ -558,7 +558,7 @@ class RobotPu {
 
     // Movement & State
     public last_cmd_ts: number;
-    private fw_sp: number = 6;
+    private fw_sp: number = 4;
     private bw_sp: number = -3;
     private sp: number = 0;
     private di: number = 0;
@@ -647,7 +647,7 @@ class RobotPu {
         // Audio & Radio Setup
         radio.setGroup(this.groupID);
         billy.voicePreset(BillyVoicePreset.LittleRobot);
-        music.setVolume(150);
+        music.setVolume(255);
 
         // Initialize Command Dictionary
         this.cmdDict = {
@@ -718,7 +718,7 @@ class RobotPu {
         this.set_ct([0, 1, 2, 3, 4, 5], [0, 0, 0, 0, 0, 0]);
 
         // 3. Calculate movement speed based on forward speed multiplier
-        let movementSpeed = di * this.fw_sp;
+        let movementSpeed = di * this.fw_sp * 0.68;
 
         // 4. Execute the movement via the WK engine
         // Parameters: states, sync_servos (0-3), sync_speed, async_servos (4-5), async_speed
@@ -963,7 +963,7 @@ class RobotPu {
         // 5. Apply Low-pass filter to Speed
         let target_sp = 0;
         if (dis >= 0) {
-            target_sp = Math.min(this.fw_sp, (dis + 5) * 0.8);
+            target_sp = Math.min(this.fw_sp, (dis + 5));
         } else {
             target_sp = Math.max(this.bw_sp, (dis - 5) * 0.6);
         }
@@ -1205,7 +1205,7 @@ class RobotPu {
      * @param s The phonetic or musical string to be synthesized.
      */
     public sing(s: string): void {
-       billy.singShim(s)
+        billy.singShim(s)
     }
     /**
  * Makes the robot introduce itself using text-to-speech.
@@ -1317,57 +1317,88 @@ class RobotPu {
     public turn(v: number) { this.di = (this.di * 4 + v) * 0.2; }
     public roll(v: number) { this.h_l_bias = (v + this.h_l_bias) * 0.5; }
     public pitch(v: number) { this.h_u_bias = (v * -1 + this.h_u_bias) * 0.5; }
-    public button(v: number) { if (v == 0) this.gst = 0; else this.gst = v; }
+    public button(v: number) { this.gst = v; }
     public logo(v: number) { this.talk(this.sn); }
     public pose(v: number) { this.r_st = v; this.gst = 0; }
+
+    public setTrim(left_foot: number, left_leg: number, right_foot: number, right_leg: number, head_yaw: number, head_pitch: number) {
+        this.pr.s_tr = [left_foot, left_leg, right_foot, right_leg, head_yaw, head_pitch];
+    }
+
+    public calibrate() {
+        /**
+         * Run the robot's calibration routine.
+         */
+        // 1. Move to calibration position
+        this.wk.servo_move(25, this.pr);
+
+        // 2. Introduce itself
+        this.intro();
+
+        // 3. Flashes the eyes three times for visual feedback
+        for (let i = 0; i < 3; i++) {
+            this.wk.flash(1020);  // Bright flash
+            basic.pause(500); // In MakeCode, sleep(500) is basic.pause(500)
+        }
+
+        // 4. Turn eyes on and return to neutral position
+        this.wk.eyes_ctl(1);
+        this.wk.servo_move(0, this.pr);
+        basic.pause(2000);
+    }
+
+    public runKeyValueCMD(key: string, v: number) {
+        this.last_cmd_ts = control.millis();
+
+        // 3. Look up the function in the dictionary
+        let action = this.cmdDict[key];
+
+        // 4. If the function exists, execute it (the "noop" equivalent)
+        if (action) {
+            action(v)
+        }
+    }
+
+    public runStrCMD(s: string) {
+        // 1. Update the timestamp of the last received command
+        this.last_cmd_ts = control.millis();
+
+        // 2. Process #put: Text-to-Speech
+        if (s.substr(0, 4) == "#put") {
+            this.talk(s.substr(4));
+        }
+
+        // 3. Process #pus: Buffered Singing (6 segments)
+        else if (s.substr(0, 4) == "#pus") {
+            // Assume s_list is an array of strings defined in the class
+            this.sing(s.substr(4));
+        }
+
+        // 4. Process #puhi: Greeting
+        else if (s.substr(0, 5) == "#puhi") {
+            robot.talk("My friend " + s.substr(5) + " is here");
+        }
+
+        // 5. Process #pun: Name/Serial Update
+        else if (s.substr(0, 4) == "#pun") {
+            robot.sn = s.substr(4);
+            robot.intro();
+        }
+    }
 }
 
-let robot = new RobotPu("SN_01", "Peu");
-basic.forever(function () {
-    robot.update_states();
-    robot.state_machine();
-    //basic.pause(10)
-})
+let robot = new RobotPu("Peu", "Peu");
+robot.setTrim(-7, -0.0, -7, -0.0, -9.0, 0.0);
+robot.calibrate()
 
 // Register the event listener for incoming string messages
 radio.onReceivedString(function (receivedString: string) {
-    // 1. Update the timestamp of the last received command
-    robot.last_cmd_ts = control.millis();
-
-    // 2. Process #put: Text-to-Speech
-    if (receivedString.substr(0, 4) == "#put") {
-        robot.talk(receivedString.substr(4));
-    }
-
-    // 3. Process #pus: Buffered Singing (6 segments)
-    else if (receivedString.substr(0, 4) == "#pus") {
-        // Assume s_list is an array of strings defined in the class
-        robot.sing(receivedString.substr(4));
-    }
-
-    // 4. Process #puhi: Greeting
-    else if (receivedString.substr(0, 5) == "#puhi") {
-        robot.talk("My friend " + receivedString.substr(5) + " is here");
-    }
-
-    // 5. Process #pun: Name/Serial Update
-    else if (receivedString.substr(0, 4) == "#pun") {
-        robot.sn = receivedString.substr(4);
-        robot.intro();
-    }
+    robot.runStrCMD(receivedString)
 });
 
 // 2. Use it inside the Radio Event
 radio.onReceivedValue(function (name: string, value: number) {
-    robot.last_cmd_ts = control.millis();
-
-    // 3. Look up the function in the dictionary
-    let action = robot.cmdDict[name];
-
-    // 4. If the function exists, execute it (the "noop" equivalent)
-    if (action) {
-        action(value);
-    }
+    robot.runKeyValueCMD(name, value)
 });
 // Replace button_a.was_pressed()
 input.onButtonPressed(Button.A, function () {
@@ -1378,3 +1409,10 @@ input.onButtonPressed(Button.A, function () {
 input.onButtonPressed(Button.B, function () {
     robot.incr_group_id(-1); // Decrement radio group
 });
+
+while (true) {
+    robot.update_states();
+    robot.state_machine();
+    basic.pause(1)
+}
+
