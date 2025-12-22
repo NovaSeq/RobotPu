@@ -81,7 +81,7 @@ class WK(object):
         target = max(0, min(179, target))  # Clamp target to valid range
         err = p.s_err[idx] = target - p.s_tg[idx]  # Calculate error
         # Move toward target at controlled speed
-        p.s_tg[idx] += err if math.fabs(err) < sp else sp if err >= 0 else -sp
+        p.s_tg[idx] += err if math.fabs(err) <= sp else sp if err >= 0 else -sp
         self.servo(idx, p.s_tg[idx])  # Update servo position
 
     # move servo motor toward the target angle immediately

@@ -565,7 +565,6 @@ class RobotPu(object):
                 self.side_step(self.di)
         else:
             self.walk(self.sp, self.di)
-            self.walk(self.sp, self.di)
 
     # check if the robot should wake up
     def check_wakeup(self):
@@ -598,10 +597,10 @@ class RobotPu(object):
 
     # control the speed of the robot
     def speed (self, v:float):
-        if v > 0.1:
+        if v > 0.2:
             self.sp = v * self.fw_sp
             self.gst = 5
-        elif v < -0.1:
+        elif v < -0.2:
             self.sp = -v * self.bw_sp
             self.gst = 5
         else:
