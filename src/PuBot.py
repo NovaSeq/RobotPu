@@ -46,7 +46,7 @@ class RobotPu(object):
         
         # Motion control parameters
         self.last_cmd_ts = 0      # Timestamp of last received command (ms)
-        self.fw_sp = 6         # Forward speed multiplier
+        self.fw_sp = 4         # Forward speed multiplier
         self.bw_sp = -3           # Backward speed multiplier
         self.sp = 0.0             # Current speed setting
         self.di = 0.0             # Current direction setting (degrees)
