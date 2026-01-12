@@ -1400,19 +1400,22 @@ radio.onReceivedString(function (receivedString: string) {
 radio.onReceivedValue(function (name: string, value: number) {
     robot.runKeyValueCMD(name, value)
 });
-// Replace button_a.was_pressed()
+// when button_a.was_pressed()
 input.onButtonPressed(Button.A, function () {
     robot.incr_group_id(1); // Increment radio group
 });
 
-// Replace button_b.was_pressed()
+// when button_b.was_pressed()
 input.onButtonPressed(Button.B, function () {
     robot.incr_group_id(-1); // Decrement radio group
 });
 
-while (true) {
-    robot.update_states();
-    robot.state_machine();
-    basic.pause(1)
-}
-
+control.inBackground(function () {
+    while (true) {
+        robot.update_states();   // Checks sensors and falls
+        robot.state_machine();   // Executes current behavior logic
+        // Use a slightly larger pause to prevent CPU starvation
+        // 20ms is standard for robotics to maintain 50Hz responsiveness
+        basic.pause(5);
+    }
+});
