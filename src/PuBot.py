@@ -92,7 +92,7 @@ class RobotPu(object):
         # Dance behavior configuration
         self.d_st = [0]           # Current dance state
         self.d_dict = {           # Predefined dance routines
-            14: [0, 15, 15, 0, 3, 5, 3],  # Forward-backward movement
+            14: [0, 15, 15, 15, 15, 0, 0, 0, 3, 5, 3],  # ballet
             0: [0, 19, 0, 18, 0, 3],      # Side-to-side movement
             5: [3, 5, 2, 5, 3],           # Quick steps
             16: [17, 16, 17, 16, 17]      # Rocking motion
