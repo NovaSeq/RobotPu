@@ -620,6 +620,7 @@ class RobotPu(object):
 
     # switch robot state with buttion events
     def button(self, v:int):
+        pr.s_ct = [0.0] * pr.dof  # reset servo control vector to avoid over correction
         if v == 0:
             if self.gst == -4:
                 self.write_config()
