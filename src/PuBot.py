@@ -108,6 +108,9 @@ class RobotPu(object):
         
         # Radio communication
         self.groupID = 166        # Default radio group ID
+
+        # Trim
+        self.tr_i = 0
         
         # Initialize hardware components
         self.read_config()        # Load configuration from file
@@ -127,6 +130,7 @@ class RobotPu(object):
         
         # State index to function mapping
         self.st_dict = {
+            -4: self.trim,
             -3: self.fall,
             -2: self.fetal,
             0: self.idle,
@@ -246,6 +250,11 @@ class RobotPu(object):
         This helps with identification when multiple robots are present.
         """
         self.talk("My name is " + self.sn + " " + self.name)
+
+    def trim(self):
+        wk.servo_move(25, pr)
+        display.show(self.tr_i)
+
 
     # calibrate the robot
     def calibrate(self):
@@ -627,19 +636,31 @@ class RobotPu(object):
             self.talk("Rest!")
             self.ro.send_str("#puack")
         elif v == 1:
-            self.talk("Exploring")
-            self.ep_sp = 4.0
-            self.ep_di = 0.0
-            self.gst = 1
+            if self.gst == -4:
+                pr.s_tr[self.tr_i] -= 1
+            else:
+                self.talk("Exploring")
+                self.ep_sp = 4.0
+                self.ep_di = 0.0
+                self.gst = 1
         elif v == 2:
-            self.gst = 2
+            if self.gst == -4:
+                self.tr_i += 1
+            else:
+                self.gst = 2
         elif v == 3:
-            self.talk("Dance!")
-            self.d_sp = 1.5
-            self.gst = 3
+            if self.gst == -4:
+                self.tr_i -= 1
+            else:
+                self.talk("Dance!")
+                self.d_sp = 1.5
+                self.gst = 3
         elif v == 4:
             # self.talk("Kick!")
-            self.gst = 4
+            if self.gst == -4:
+                pr.s_tr[self.tr_i] += 1
+            else:
+                self.gst = 4
 
     # robot actions when the logo button is pressed
     def logo (self, v):
@@ -722,6 +743,12 @@ class RobotPu(object):
             self.incr_group_id(1)
         if button_b.was_pressed():
             self.incr_group_id(-1)
+        if pin_logo.is_touched():
+            sleep(500)
+            if self.gst ==  -4:
+                self.gst = 0
+            else:
+                self.gst = -4
             
         # Handle automatic state transitions
         if self.gst > 0:  # If in any active state
