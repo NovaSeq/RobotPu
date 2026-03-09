@@ -1,13 +1,11 @@
 from microbit import *
-import speech
-import neopixel
+import speech, neopixel, gc
 from WK import *
 from MakeRadio import *
 from MusicLib import *
 from HCSR04 import *
 from Parameters import *
 from Content import *
-import gc
 
 pr = Parameters()
 wk = WK()

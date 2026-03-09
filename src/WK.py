@@ -1,8 +1,6 @@
 from microbit import *
 from Parameters import *
-import math
-import time
-import random
+import math, time,random
 
 WK_ADDR = 0x10
 
