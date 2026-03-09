@@ -1,7 +1,7 @@
 
 class Parameters(object):
     def __init__(self):
-        self.w_t, self.j_t, self.l_s = 16, 27, 45
+        self.w_t, self.j_t, self.l_s = 18, 27, 45
         # degrees of freedom    
         self.dof = 6
         # servo error 

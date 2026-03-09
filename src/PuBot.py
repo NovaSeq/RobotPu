@@ -1,8 +1,5 @@
 from microbit import *
 import speech
-import math
-import random
-import time
 import neopixel
 from WK import *
 from MakeRadio import *
@@ -10,7 +7,6 @@ from MusicLib import *
 from HCSR04 import *
 from Parameters import *
 from Content import *
-import os
 import gc
 
 pr = Parameters()
@@ -75,9 +71,9 @@ class RobotPu(object):
         # Exploration behavior parameters
         self.ep_sp = 0.0          # Exploration speed
         self.ep_di = 0.0          # Exploration direction
-        self.ep_max_i = 0         # Index of clearest direction
+        #self.ep_max_i = 0         # Index of clearest direction
         self.ep_thr = 7.5         # Distance threshold for obstacle detection (cm)
-        self.ep_ot = 0            # Tilt offset during exploration
+        #self.ep_ot = 0            # Tilt offset during exploration
         self.ep_far = 20          # Far distance threshold for obstacle detection (cm)  
         
         # Fall recovery tracking
@@ -85,7 +81,6 @@ class RobotPu(object):
         self.last_state = 0       # State before falling
         
         # Timing and synchronization
-        self.t_c = 0              # Last command timestamp
         self.l_o_t = 0            # Left tilt offset
         self.r_o_t = 0            # Right tilt offset
         
@@ -177,25 +172,26 @@ class RobotPu(object):
             # Silently continue with default values if config can't be read
             pass
 
-    #
-    # def write_config (self):
-    #     """
-    #     Save current configuration to 'pu.txt' file.
-    #     
-    #     The configuration includes:
-    #     - Robot serial number
-    #     - Current group ID
-    #     - Servo trim values
-    #     """
-    #     try:
-    #         microfs.rm('pu.txt')
-    #         #os.remove('pu.txt')
-    #     except:
-    #         print("pu.txt not found")
-    #     with open("pu.txt", 'w') as f:
-    #         f.write(self.sn + "\n")
-    #         f.write(str(self.groupID) + "\n")
-    #         # f.write(','.join([str(i) for i in self.p.s_tr]))
+
+    def write_config (self):
+        """
+        Save current configuration to 'pu.txt' file.
+
+        The configuration includes:
+        - Robot serial number
+        - Current group ID
+        - Servo trim values
+        """
+        # try:
+        #     microfs.rm('pu.txt')
+        #     #os.remove('pu.txt')
+        # except:
+        #     print("pu.txt not found")
+        with open("pu.txt", 'w') as f:
+            f.write(self.sn + "\n")
+            f.write(str(self.groupID) + "\n")
+            f.write(','.join([str(i) for i in pr.s_tr]) + "\n")
+        sleep(5000) # sleep long to prevent frequent writing that will corrupt microbit file system
 
     # set radio channel
     def set_group(self, g):
@@ -253,7 +249,7 @@ class RobotPu(object):
 
     def trim(self):
         wk.servo_move(25, pr)
-        display.show(self.tr_i)
+        display.show(self.tr_i+1)
 
 
     # calibrate the robot
@@ -591,13 +587,10 @@ class RobotPu(object):
         rt = random.randint(0, 5)
         if rt == 0:
             self.sing(self.c.compose_song())
-        if rt == 1:
-            self.talk(self.c.cute_words())
         else:
             self.talk(random.choice(["Hello! I am " + self.sn + " " + self.name + ". ",
-                                     random.choice(self.c.sentences),
-                                     "Temperature is " + str(temperature()) + " degree.",
-                                     "I ran " + str(wk.num_steps) + " steps today!"
+                                     self.c.cute_words(),
+                                     "Temperature is " + str(temperature()) + " degree."
                                      ]))
 
     # do nothing
@@ -630,6 +623,10 @@ class RobotPu(object):
     # switch robot state with buttion events
     def button(self, v:int):
         if v == 0:
+            if self.gst == -4:
+                self.write_config()
+                self.stand()
+                self.talk("Saved!")
             self.gst = 0
             self.h_u_bias = 0
             self.h_l_bias = 0
@@ -638,6 +635,7 @@ class RobotPu(object):
         elif v == 1:
             if self.gst == -4:
                 pr.s_tr[self.tr_i] -= 1
+                wk.servo_move(2, pr)
             else:
                 self.talk("Exploring")
                 self.ep_sp = 4.0
@@ -659,6 +657,7 @@ class RobotPu(object):
             # self.talk("Kick!")
             if self.gst == -4:
                 pr.s_tr[self.tr_i] += 1
+                wk.servo_move(2, pr)
             else:
                 self.gst = 4
 
@@ -745,10 +744,7 @@ class RobotPu(object):
             self.incr_group_id(-1)
         if pin_logo.is_touched():
             sleep(500)
-            if self.gst ==  -4:
-                self.gst = 0
-            else:
-                self.gst = -4
+            self.gst = -4
             
         # Handle automatic state transitions
         if self.gst > 0:  # If in any active state
