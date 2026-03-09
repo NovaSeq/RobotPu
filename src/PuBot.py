@@ -247,7 +247,6 @@ class RobotPu(object):
 
     def trim(self):
         wk.servo_move(25, pr)
-        display.show(self.tr_i+1)
 
 
     # calibrate the robot
@@ -622,10 +621,6 @@ class RobotPu(object):
     def button(self, v:int):
         pr.s_ct = [0.0] * pr.dof  # reset servo control vector to avoid over correction
         if v == 0:
-            if self.gst == -4:
-                self.write_config()
-                self.stand()
-                self.talk("Saved!")
             self.gst = 0
             self.h_u_bias = 0
             self.h_l_bias = 0
@@ -643,11 +638,13 @@ class RobotPu(object):
         elif v == 2:
             if self.gst == -4:
                 self.tr_i += 1
+                display.show(self.tr_i+1)
             else:
                 self.gst = 2
         elif v == 3:
             if self.gst == -4:
                 self.tr_i -= 1
+                display.show(self.tr_i+1)
             else:
                 self.talk("Dance!")
                 self.d_sp = 1.5
@@ -743,7 +740,14 @@ class RobotPu(object):
             self.incr_group_id(-1)
         if pin_logo.is_touched():
             sleep(500)
-            self.gst = -4
+            if self.gst == -4:
+                self.write_config()
+                self.stand()
+                self.talk("Saved!")
+                self.gst = 0
+            else:
+                self.gst = -4
+                display.show(self.tr_i+1)
             
         # Handle automatic state transitions
         if self.gst > 0:  # If in any active state
