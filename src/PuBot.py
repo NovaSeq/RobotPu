@@ -745,6 +745,7 @@ class RobotPu(object):
                 self.stand()
                 self.talk("Saved!")
                 self.gst = 0
+                self.show_channel()
             else:
                 self.gst = -4
                 display.show(self.tr_i+1)
