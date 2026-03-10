@@ -31,7 +31,7 @@ class WK(object):
     def motor(self, m, sp):
         """
         Control a DC motor on the robot.
-        
+
         Args:
             m (int): Motor index (1 or 2)
             sp (int): Speed value from -100 to 100 (negative for reverse)
@@ -51,18 +51,6 @@ class WK(object):
         if 0 <= sr <= 7:
             a = min(180, max(0, int(a)))
             i2c.write(WK_ADDR, bytearray([0x10 if sr == 7 else sr + 3, a, 0, 0]))
-
-    # control the LED lights on the i2C expansion board
-    def set_light(self, light):
-        """
-        Control the LED lights on the I2C expansion board.
-        
-        Args:
-            light (int): Light intensity or pattern value
-        """
-        i2c.write(WK_ADDR, bytearray([0x12, light, 0, 0]))
-        #sleep(100)
-        #i2c.write(WK_ADDR, bytearray([0x11, 160, 0, 0]))
 
     # move servo motor toward the target angle with step
     def servo_step(self, target, sp, idx: int, p: Parameters):

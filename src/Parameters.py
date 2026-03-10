@@ -1,4 +1,3 @@
-
 class Parameters(object):
     def __init__(self):
         self.w_t, self.j_t, self.l_s = 16, 27, 45
@@ -20,8 +19,6 @@ class Parameters(object):
         self.ep_mid1 = max(0, self.ep_mid2 - 1)
         # the list of poses for forward and backward walking
         self.walk_fw_sts, self.walk_bw_sts = [2, 3, 4, 5], [6, 5, 7, 3]
-        # the list of poses for forward and backward skating
-        self.skate_fw_sts, self.skate_bw_sts = [8, 9, 10, 11], [12, 1, 13, 9]
         # the list of safe poses for dancing
         self.dance_ok = [0, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 16, 17]
         w_t, l_s, j_t = self.w_t, self.l_s, self.j_t
