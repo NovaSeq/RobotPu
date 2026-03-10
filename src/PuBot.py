@@ -104,6 +104,9 @@ class RobotPu(object):
 
         # Trim
         self.tr_i = 0
+
+        # sound level
+        self.sl = 0
         
         # Initialize hardware components
         self.read_config()        # Load configuration from file
@@ -392,10 +395,9 @@ class RobotPu(object):
                        [rl, rl * -1.0, rl, rl * -1.0, rl * -0.5])
         if math.fabs(self.bd_pth2) > 12:
             self.set_ct([5], [-self.bd_pth2])
-        sl = microphone.sound_level()
-        pr.st_tg[self.r_st][5]=90-sl*0.3
+        pr.st_tg[self.r_st][5]=90-self.sl*0.3
         return self.move([self.r_st], [0, 1, 2, 3, 4, 5],
-                         1 + sl*0.001,
+                         1 + self.sl*0.001,
                          [], 0.5)
 
     # make the robot walk with self-balance
@@ -480,8 +482,7 @@ class RobotPu(object):
     # make the robot dance with self-balance
     def dance(self):
         ts = time.ticks_ms()
-        ms = microphone.sound_level()
-        il = self.music.is_a_beat(ts, ms, 1.1)
+        il = self.music.is_a_beat(ts, self.sl, 1.1)
         if ts - self.last_high_b > self.music.period * 0.5:
             self.dance_l_itv *= -1
             self.dance_u_itv *= -1
@@ -495,7 +496,7 @@ class RobotPu(object):
         if math.fabs(ft)<8:
             ft =0
         lt = ft + self.dance_l_itv
-        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.001])
+        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-self.sl*0.001])
         self.d_sp = min(2.5, self.d_sp * 1.015)
         if self.max_g > 1800:
             self.d_sp *= 0.9
@@ -531,12 +532,11 @@ class RobotPu(object):
             self.alt_l *= self.alt_sc
         self.check_wakeup()
         if self.rest() == 0:
-            sl = microphone.sound_level()
-            self.sound_threshold = (self.sound_threshold * 24 + sl) * 0.04
+            self.sound_threshold = (self.sound_threshold * 24 + self.sl) * 0.04
             if random.randint(0, 1000) == 0:
                 self.alt_l -= 2
                 self.ro.send_str("#puhi, " + self.sn + " " + self.name)
-            if random.randint(0, 280- sl)== 0 or sl> self.sound_threshold*3:
+            if random.randint(0, 280- self.sl)== 0 or self.sl> self.sound_threshold*3:
                 pr.st_tg[26][4] = random.randint(30, 160) #min(160, max(20, self.p.st_tg[26][4]+random.randint(-10, 10)))
                 pr.st_tg[26][5] = random.randint(40, 105) #min(115, max(30, self.p.st_tg[26][5]+random.randint(-10, 10)))
             #if sl> self.sound_threshold*8:
@@ -729,6 +729,7 @@ class RobotPu(object):
         - Button A: Increment radio group ID
         - Button B: Decrement radio group ID
         """
+        self.sl = microphone.sound_level()
         # Check for free-fall condition
         if accelerometer.was_gesture("freefall"):
             self.gst = -2  # Enter fall state
@@ -800,6 +801,9 @@ class RobotPu(object):
         if self.gst >= 0:  # If in a normal state
             wk.blink(self.alt_l)  # Update eye blink animation
             self.last_state = self.gst  # Remember last normal state
+
+        # fiddling factors
+        wk.servo(6, self.sl)
 
     # main event loop
     def run(self):
