@@ -628,6 +628,7 @@ class RobotPu(object):
             self.ro.send_str("#puack")
         elif v == 1:
             if self.gst == -4:
+                display.show(self.tr_i + 1)
                 pr.s_tr[self.tr_i] -= 1
                 wk.servo_move(2, pr)
             else:
@@ -652,6 +653,7 @@ class RobotPu(object):
         elif v == 4:
             # self.talk("Kick!")
             if self.gst == -4:
+                display.show(self.tr_i + 1)
                 pr.s_tr[self.tr_i] += 1
                 wk.servo_move(2, pr)
             else:
