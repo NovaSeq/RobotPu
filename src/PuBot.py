@@ -44,6 +44,7 @@ class RobotPu(object):
         self.bw_sp = -3           # Backward speed multiplier
         self.sp = 0.0             # Current speed setting
         self.di = 0.0             # Current direction setting (degrees)
+        self.hdg_di = 0.0          # Smoothed direction command for compass heading hold
         
         # Head movement calibration
         self.h_u_bias = 0         # Vertical bias for head positioning
@@ -107,6 +108,9 @@ class RobotPu(object):
 
         # sound level
         self.sl = 0
+
+        # target heading
+        self.t_heading = 0
         
         # Initialize hardware components
         self.read_config()        # Load configuration from file
@@ -134,16 +138,19 @@ class RobotPu(object):
             2: self.jump,
             3: self.dance,
             4: self.kick,
-            5: self.joystick
+            5: self.joystick,
+            6: self.walk_heading
         }
         
         # Radio command to function mapping
         self.cmd_dict = {
             "#puspeed" : self.speed,
             "#puturn" : self.turn,
+            "#puhead" : self.heading,
             "#puroll" : self.roll,
             "#pupitch" : self.pitch,
             "#puB" : self.button,
+            "#puF": self.follow,
             "#pulogo" : self.logo,
             "#purs" : self.pose
         }
@@ -404,6 +411,36 @@ class RobotPu(object):
     def walk(self, sp, di):
         return self.move_balance(sp, di, pr.walk_fw_sts, pr.walk_bw_sts)
 
+    def follow(self, v: int):
+        if v == 0:
+            self.gst = 6
+
+    def walk_heading(self, kp=0.02, max_di=1.0):
+        """Walk while keeping a specified compass heading.
+
+        Args:
+            sp: Walking speed (same semantics as walk())
+            target_heading: Target heading in degrees [0, 359]
+            kp: Proportional gain converting heading error (deg) to steering command
+            max_di: Clamp for steering command (-max_di..max_di)
+            deadband_deg: Error deadband in degrees
+            calibrate_if_needed: If True, triggers compass.calibrate() when needed
+        """
+        self.set_explore_param()
+        h = compass.heading()
+
+        # Signed shortest error in degrees, range [-180, 180], flip the heading by 180
+        err = ((self.t_heading - h + 540) % 360) - 180
+        # if abs(err) <= deadband_deg:
+        #     err = 0
+
+        di_cmd = max(min(kp * err + 0.5*self.ep_di, max_di), -max_di) # merge with obstacle avoidance
+
+        # Smooth steering to avoid oscillation
+        self.hdg_di = (self.hdg_di * 3 + di_cmd) * 0.25
+
+        return self.walk(self.ep_sp*2, self.hdg_di)
+
     # make the robot side step with self-balance    
     def side_step(self, di):
         sts = [20, 22, 0, 19] if di > 0 else [18, 21, 23, 0]
@@ -441,6 +478,11 @@ class RobotPu(object):
     
     # compute auto-pilot parameters for explore mode
     def set_explore_param(self):
+        # get current point cloud index
+        a = pr.s_tg[1 if wk.pos < 2 else 3]
+        # fill in point cloud by sonar distance
+        d_i = 0 if a > 110 else 1 if a > 90 else 2 if a > 70 else 3
+        pr.ep_dis[d_i] = (pr.ep_dis[d_i] + self.sonar.distance_cm()) * 0.5
         obs_hcsr = min(pr.ep_dis[pr.ep_mid1], pr.ep_dis[pr.ep_mid2])
         if obs_hcsr < self.ep_thr + self.ep_far:
             # max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
@@ -466,11 +508,6 @@ class RobotPu(object):
 
     # make the robot explore with self-balance
     def explore(self):
-        # get current point cloud index
-        a = pr.s_tg[1 if wk.pos < 2 else 3]
-        # fill in point cloud by sonar distance
-        d_i = 0 if a > 110 else 1 if a > 90 else 2 if a > 70 else 3
-        pr.ep_dis[d_i] = (pr.ep_dis[d_i] + self.sonar.distance_cm()) * 0.5
         self.set_explore_param()
         return self.walk(self.ep_sp, self.ep_di)
 
@@ -608,6 +645,9 @@ class RobotPu(object):
     # control the direction of the robot
     def turn(self, v:float):
         self.di = (self.di*4 + v) * 0.2
+
+    def heading(self, v:float):
+        self.t_heading = v
 
     # control the roll of the robot
     def roll(self, v:float):
