@@ -49,6 +49,9 @@ The retail kit includes a **gamepad that uses the second micro:bit**. For the be
 ## The Story Of Robot PU
 - [The Saga of Saduka](https://robotgyms.com/courses/the-saga-of-robot-pu)
 
+## JavaScript/Block Codes
+- [GitHub](https://github.com/robotgyms/pxt-robotpu.git)
+
 ## 🛠 Project Structure
 
 ```
