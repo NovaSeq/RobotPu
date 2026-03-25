@@ -14,6 +14,41 @@ Welcome to the Pu Robot project! This repository contains the MicroPython code a
 - **Expandable**: Add new features and capabilities through programming and 3D printing
 - **Community-Driven**: Share and download custom programs and modifications
 
+Learn more about The Story of PU, which shows robot PU's activities, hardware, software, tutorials, and upgrade projects at:
+
+- **Website**: [robotgyms.com/pu](https://robotgyms.com/pu)
+- **YouTube**: [The Story of PU](https://www.youtube.com/@TheStoryofPu-yw8tr)
+- **TikTok**: [@thestoryofpu](https://www.tiktok.com/@thestoryofpu)
+
+Purchase links:
+
+- **Amazon**: [Robot PU kit](https://www.amazon.com/Robot-Programmable-Interactive-Upgradable-Self-Balancing/dp/B0DR8RGVXN)
+
+## Features
+
+- **Expressive personality**: dance routines, reactions, auto-pilot, soccer
+- **Classroom-ready** with block coding, javascript and Python paths
+- **Maker-friendly** with free tutorials and projects of hardware and software to upgrade robot PU
+- **Open-source** with community resources
+
+## What’s in the Kit
+
+- Robot PU (pre-built and upgradable)
+- 2 × micro:bit compatible board
+- Gamepad (remote control and distributed computation)
+- [Manual](https://robotgyms.com/courses/the-story-of-pu-book-1-pair-up/)
+- [Tutorials](https://github.com/robotgyms/pxt-robotpu/tree/main/tutorials/JavaScripts/README.md)
+- [Games](https://robotgyms.com/courses/the-story-of-pu-book-2-games/)
+- [Classes](https://robotgyms.com/courses/the-story-of-pu-book-3-growth)
+- [Upgrade Projects](https://robotgyms.com/courses/the-story-of-pu-book-4-journey/)
+
+The retail kit includes a **gamepad that uses the second micro:bit**. For the best experience (and to ensure the radio control protocol matches robotPu’s `runKeyValueCommand` / `runStringCommand`), flash the official Robot PU gamepad program to the gamepad micro:bit:
+
+- https://makecode.microbit.org/_JbygU12aCAsU
+
+## The Story Of Robot PU
+- [The Saga of Saduka](https://robotgyms.com/courses/the-saga-of-robot-pu)
+
 ## 🛠 Project Structure
 
 ```
