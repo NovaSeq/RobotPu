@@ -2,11 +2,11 @@
 
 ## Pu Robot Components
 - Main Control Board (micro:bit)
-- Motors (x2)
-- Distance Sensor
+- PCB expansion
+- Servos (x6)
+- Distance Sensor (Sonar)
 - RGB LED Matrix
-- Buzzer
-- Buttons (A, B, Reset)
+- GamePad
 
 ## Connecting to Your Computer
 1. Locate the micro USB port on Pu's back
@@ -16,8 +16,8 @@
 ## Power Options
 - **USB Power**: For programming and testing
 - **Battery Power**: For mobile operation
-  - Battery life: Up to 4 hours of continuous use
-  - Charging time: ~2 hours
+  - Battery life: Up to 30 minutes of continuous use
+  - Charging time: ~15 minutes
 
 ## Hardware Specifications
 - Processor: 32-bit ARM Cortex-M4
