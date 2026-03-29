@@ -71,7 +71,7 @@ class RobotPu(object):
         self.ep_sp = 0.0          # Exploration speed
         self.ep_di = 0.0          # Exploration direction
         #self.ep_max_i = 0         # Index of clearest direction
-        self.ep_thr = 7.5         # Distance threshold for obstacle detection (cm)
+        self.ep_thr = 7         # Distance threshold for obstacle detection (cm)
         #self.ep_ot = 0            # Tilt offset during exploration
         self.ep_far = 20          # Far distance threshold for obstacle detection (cm)  
         
@@ -484,7 +484,7 @@ class RobotPu(object):
         d_i = 0 if a > 110 else 1 if a > 90 else 2 if a > 70 else 3
         pr.ep_dis[d_i] = (pr.ep_dis[d_i] + self.sonar.distance_cm()) * 0.5
         obs_hcsr = min(pr.ep_dis[pr.ep_mid1], pr.ep_dis[pr.ep_mid2])
-        if obs_hcsr < self.ep_thr + self.ep_far:
+        if obs_hcsr > self.ep_thr + self.ep_far:
             # max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
             # self.ep_di = (self.ep_di*3+pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2))*0.25
             nd = self.get_turn_from_sonar(pr.ep_dis[pr.ep_mid1:pr.ep_mid2+1], 3)
