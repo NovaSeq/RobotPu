@@ -434,7 +434,7 @@ class RobotPu(object):
         # if abs(err) <= deadband_deg:
         #     err = 0
 
-        di_cmd = max(min(kp * err + 0.5*self.ep_di, max_di), -max_di) # merge with obstacle avoidance
+        di_cmd = max(min(kp * err *0.9 + 0.1*self.ep_di, max_di), -max_di) # merge with obstacle avoidance
 
         # Smooth steering to avoid oscillation
         self.hdg_di = (self.hdg_di * 3 + di_cmd) * 0.25
