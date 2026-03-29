@@ -442,7 +442,7 @@ class RobotPu(object):
     # compute auto-pilot parameters for explore mode
     def set_explore_param(self):
         obs_hcsr = min(pr.ep_dis[pr.ep_mid1], pr.ep_dis[pr.ep_mid2])
-        if obs_hcsr < self.ep_thr + self.ep_far:
+        if obs_hcsr > self.ep_thr + self.ep_far:
             # max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
             # self.ep_di = (self.ep_di*3+pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2))*0.25
             nd = self.get_turn_from_sonar(pr.ep_dis[pr.ep_mid1:pr.ep_mid2+1], 3)
