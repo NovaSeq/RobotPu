@@ -23,7 +23,7 @@ class MusicLib(object):
             self.buf[idx] = (self.buf[idx] * (self.hits-1) + self.loud) / self.hits
         else:
             # fill the new bucket
-            self.hits = 0
+            self.hits = 1 
             self.buf[idx] = self.loud
             self.last_idx = idx
             # beat detection only when previous bucket is full

@@ -1,17 +1,11 @@
 from microbit import *
-import speech
-import math
-import random
-import time
-import neopixel
+import speech, neopixel, gc
 from WK import *
 from MakeRadio import *
 from MusicLib import *
 from HCSR04 import *
 from Parameters import *
 from Content import *
-import os
-import gc
 
 pr = Parameters()
 wk = WK()
@@ -75,9 +69,9 @@ class RobotPu(object):
         # Exploration behavior parameters
         self.ep_sp = 0.0          # Exploration speed
         self.ep_di = 0.0          # Exploration direction
-        self.ep_max_i = 0         # Index of clearest direction
+        #self.ep_max_i = 0         # Index of clearest direction
         self.ep_thr = 7.5         # Distance threshold for obstacle detection (cm)
-        self.ep_ot = 0            # Tilt offset during exploration
+        #self.ep_ot = 0            # Tilt offset during exploration
         self.ep_far = 20          # Far distance threshold for obstacle detection (cm)  
         
         # Fall recovery tracking
@@ -85,7 +79,6 @@ class RobotPu(object):
         self.last_state = 0       # State before falling
         
         # Timing and synchronization
-        self.t_c = 0              # Last command timestamp
         self.l_o_t = 0            # Left tilt offset
         self.r_o_t = 0            # Right tilt offset
         
@@ -108,6 +101,12 @@ class RobotPu(object):
         
         # Radio communication
         self.groupID = 166        # Default radio group ID
+
+        # Trim
+        self.tr_i = 0
+
+        # sound level
+        self.sl = 0
         
         # Initialize hardware components
         self.read_config()        # Load configuration from file
@@ -127,6 +126,7 @@ class RobotPu(object):
         
         # State index to function mapping
         self.st_dict = {
+            -4: self.trim,
             -3: self.fall,
             -2: self.fetal,
             0: self.idle,
@@ -173,25 +173,26 @@ class RobotPu(object):
             # Silently continue with default values if config can't be read
             pass
 
-    #
-    # def write_config (self):
-    #     """
-    #     Save current configuration to 'pu.txt' file.
-    #     
-    #     The configuration includes:
-    #     - Robot serial number
-    #     - Current group ID
-    #     - Servo trim values
-    #     """
-    #     try:
-    #         microfs.rm('pu.txt')
-    #         #os.remove('pu.txt')
-    #     except:
-    #         print("pu.txt not found")
-    #     with open("pu.txt", 'w') as f:
-    #         f.write(self.sn + "\n")
-    #         f.write(str(self.groupID) + "\n")
-    #         # f.write(','.join([str(i) for i in self.p.s_tr]))
+
+    def write_config (self):
+        """
+        Save current configuration to 'pu.txt' file.
+
+        The configuration includes:
+        - Robot serial number
+        - Current group ID
+        - Servo trim values
+        """
+        # try:
+        #     microfs.rm('pu.txt')
+        #     #os.remove('pu.txt')
+        # except:
+        #     print("pu.txt not found")
+        with open("pu.txt", 'w') as f:
+            f.write(self.sn + "\n")
+            f.write(str(self.groupID) + "\n")
+            f.write(','.join([str(i) for i in pr.s_tr]) + "\n")
+        sleep(5000) # sleep long to prevent frequent writing that will corrupt microbit file system
 
     # set radio channel
     def set_group(self, g):
@@ -246,6 +247,10 @@ class RobotPu(object):
         This helps with identification when multiple robots are present.
         """
         self.talk("My name is " + self.sn + " " + self.name)
+
+    def trim(self):
+        wk.servo_move(25, pr)
+
 
     # calibrate the robot
     def calibrate(self):
@@ -390,10 +395,9 @@ class RobotPu(object):
                        [rl, rl * -1.0, rl, rl * -1.0, rl * -0.5])
         if math.fabs(self.bd_pth2) > 12:
             self.set_ct([5], [-self.bd_pth2])
-        sl = microphone.sound_level()
-        pr.st_tg[self.r_st][5]=90-sl*0.3
+        pr.st_tg[self.r_st][5]=90-self.sl*0.3
         return self.move([self.r_st], [0, 1, 2, 3, 4, 5],
-                         1 + sl*0.001,
+                         1 + self.sl*0.001,
                          [], 0.5)
 
     # make the robot walk with self-balance
@@ -438,7 +442,7 @@ class RobotPu(object):
     # compute auto-pilot parameters for explore mode
     def set_explore_param(self):
         obs_hcsr = min(pr.ep_dis[pr.ep_mid1], pr.ep_dis[pr.ep_mid2])
-        if obs_hcsr < self.ep_thr + self.ep_far:
+        if obs_hcsr > self.ep_thr + self.ep_far:
             # max_hcsr, self.ep_max_i = max((dis, i) for i, dis in enumerate(pr.ep_dis))
             # self.ep_di = (self.ep_di*3+pr.ep_dir[self.ep_max_i] + random.uniform(-0.2, 0.2))*0.25
             nd = self.get_turn_from_sonar(pr.ep_dis[pr.ep_mid1:pr.ep_mid2+1], 3)
@@ -478,8 +482,7 @@ class RobotPu(object):
     # make the robot dance with self-balance
     def dance(self):
         ts = time.ticks_ms()
-        ms = microphone.sound_level()
-        il = self.music.is_a_beat(ts, ms, 1.1)
+        il = self.music.is_a_beat(ts, self.sl, 1.1)
         if ts - self.last_high_b > self.music.period * 0.5:
             self.dance_l_itv *= -1
             self.dance_u_itv *= -1
@@ -493,7 +496,7 @@ class RobotPu(object):
         if math.fabs(ft)<8:
             ft =0
         lt = ft + self.dance_l_itv
-        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-ms*0.001])
+        self.set_ct([0, 1, 2, 3, 4, 5], [ft, lt, ft, lt, self.rl, self.dance_u_itv-self.sl*0.001])
         self.d_sp = min(2.5, self.d_sp * 1.015)
         if self.max_g > 1800:
             self.d_sp *= 0.9
@@ -529,12 +532,11 @@ class RobotPu(object):
             self.alt_l *= self.alt_sc
         self.check_wakeup()
         if self.rest() == 0:
-            sl = microphone.sound_level()
-            self.sound_threshold = (self.sound_threshold * 24 + sl) * 0.04
+            self.sound_threshold = (self.sound_threshold * 24 + self.sl) * 0.04
             if random.randint(0, 1000) == 0:
                 self.alt_l -= 2
                 self.ro.send_str("#puhi, " + self.sn + " " + self.name)
-            if random.randint(0, 280- sl)== 0 or sl> self.sound_threshold*3:
+            if random.randint(0, 280- self.sl)== 0 or self.sl> self.sound_threshold*3:
                 pr.st_tg[26][4] = random.randint(30, 160) #min(160, max(20, self.p.st_tg[26][4]+random.randint(-10, 10)))
                 pr.st_tg[26][5] = random.randint(40, 105) #min(115, max(30, self.p.st_tg[26][5]+random.randint(-10, 10)))
             #if sl> self.sound_threshold*8:
@@ -582,13 +584,10 @@ class RobotPu(object):
         rt = random.randint(0, 5)
         if rt == 0:
             self.sing(self.c.compose_song())
-        if rt == 1:
-            self.talk(self.c.cute_words())
         else:
             self.talk(random.choice(["Hello! I am " + self.sn + " " + self.name + ". ",
-                                     random.choice(self.c.sentences),
-                                     "Temperature is " + str(temperature()) + " degree.",
-                                     "I ran " + str(wk.num_steps) + " steps today!"
+                                     self.c.cute_words(),
+                                     "Temperature is " + str(temperature()) + " degree."
                                      ]))
 
     # do nothing
@@ -620,6 +619,7 @@ class RobotPu(object):
 
     # switch robot state with buttion events
     def button(self, v:int):
+        pr.s_ct = [0.0] * pr.dof  # reset servo control vector to avoid over correction
         if v == 0:
             self.gst = 0
             self.h_u_bias = 0
@@ -627,19 +627,37 @@ class RobotPu(object):
             self.talk("Rest!")
             self.ro.send_str("#puack")
         elif v == 1:
-            self.talk("Exploring")
-            self.ep_sp = 4.0
-            self.ep_di = 0.0
-            self.gst = 1
+            if self.gst == -4:
+                display.show(self.tr_i + 1)
+                pr.s_tr[self.tr_i] -= 1
+                wk.servo_move(2, pr)
+            else:
+                self.talk("Exploring")
+                self.ep_sp = 4.0
+                self.ep_di = 0.0
+                self.gst = 1
         elif v == 2:
-            self.gst = 2
+            if self.gst == -4:
+                self.tr_i += 1
+                display.show(self.tr_i+1)
+            else:
+                self.gst = 2
         elif v == 3:
-            self.talk("Dance!")
-            self.d_sp = 1.5
-            self.gst = 3
+            if self.gst == -4:
+                self.tr_i -= 1
+                display.show(self.tr_i+1)
+            else:
+                self.talk("Dance!")
+                self.d_sp = 1.5
+                self.gst = 3
         elif v == 4:
             # self.talk("Kick!")
-            self.gst = 4
+            if self.gst == -4:
+                display.show(self.tr_i + 1)
+                pr.s_tr[self.tr_i] += 1
+                wk.servo_move(2, pr)
+            else:
+                self.gst = 4
 
     # robot actions when the logo button is pressed
     def logo (self, v):
@@ -713,6 +731,7 @@ class RobotPu(object):
         - Button A: Increment radio group ID
         - Button B: Decrement radio group ID
         """
+        self.sl = microphone.sound_level()
         # Check for free-fall condition
         if accelerometer.was_gesture("freefall"):
             self.gst = -2  # Enter fall state
@@ -722,6 +741,17 @@ class RobotPu(object):
             self.incr_group_id(1)
         if button_b.was_pressed():
             self.incr_group_id(-1)
+        if pin_logo.is_touched():
+            sleep(500)
+            if self.gst == -4:
+                self.write_config()
+                self.stand()
+                self.talk("Saved!")
+                self.gst = 0
+                self.show_channel()
+            else:
+                self.gst = -4
+                display.show(self.tr_i+1)
             
         # Handle automatic state transitions
         if self.gst > 0:  # If in any active state
@@ -773,6 +803,9 @@ class RobotPu(object):
         if self.gst >= 0:  # If in a normal state
             wk.blink(self.alt_l)  # Update eye blink animation
             self.last_state = self.gst  # Remember last normal state
+
+        # fiddling factors
+        wk.servo(6, self.sl)
 
     # main event loop
     def run(self):

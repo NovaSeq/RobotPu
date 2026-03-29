@@ -2,7 +2,6 @@ from microbit import *
 import ustruct
 import radio
 
-
 class MakeRadio:
     def __init__(self, g, power=6, queue=3, chan=7):
         radio.config(
