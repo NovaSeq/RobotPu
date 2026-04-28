@@ -1,0 +1,1 @@
+create a new openmv program under the openmv folder as smartHat.py. the program will detect human face and  return faces and their center pixel in uart so that microbit program can know face locations and turn robot PU's head to make the face with the highest confidence in center.
