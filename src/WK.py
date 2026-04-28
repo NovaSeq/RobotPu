@@ -39,6 +39,12 @@ class WK(object):
         if -100 <= sp <= 100 and 1 <= m <= 2:
             i2c.write(WK_ADDR, bytearray([m, 0x01, sp, 0]))
 
+    def power_off(self):
+        i2c.write(WK_ADDR, bytearray([0xFF, 0x00]))
+
+    def power_on(self):
+        i2c.write(WK_ADDR, bytearray([0xFF, 0x01]))
+
     # control 8 servos that attached to the i2C expansion board
     def servo(self, sr, a):
         """

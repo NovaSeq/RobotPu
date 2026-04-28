@@ -10,7 +10,7 @@ class Parameters(object):
         # current servo target values
         self.s_tg = [90.0] * self.dof
         # servo trim vector
-        self.s_tr = [-5, -0.0, -5, -0.0, -9.0, 0.0] + [0.0] * (self.dof - 6)
+        self.s_tr = [4.0, 4.0, 0.0, -8.0, 0.0, 0.0] + [0.0] * (self.dof - 6)
         # turning directions of each grid of point clouds
         self.ep_dir = [-1.0, -0.7, 0.7, 1.0]
         self.ep_size = len(self.ep_dir)

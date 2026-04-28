@@ -1,5 +1,5 @@
 from microbit import *
-import speech, neopixel, gc
+import speech, neopixel, gc, music
 from WK import *
 from MakeRadio import *
 from MusicLib import *
@@ -122,7 +122,7 @@ class RobotPu(object):
         wk.eyes_ctl(1)            # Turn on eyes
         self.sound_threshold = 116  # Sound detection threshold
         microphone.set_threshold(SoundEvent.LOUD, self.sound_threshold)
-        speaker.on()              # Enable speaker
+        speaker.off()           # disable speaker
         
         # State index to function mapping
         self.st_dict = {
@@ -517,13 +517,34 @@ class RobotPu(object):
         if md == 0 and (wk.pos == 0 or wk.pos == 2):
             self.gst = 5
 
+    def mute_audio(self):
+        music.stop()  # Kill the tone generator
+        speaker.off()  # Power down internal V2 driver
+        pin0.write_digital(0)  # Clamp P0 to 0V (Ground)
+
+    def unmute_audio(self):
+        # 1. Re-enable the internal amplifier (for V2 built-in speaker)
+        speaker.on()
+
+        # 2. Re-initialize the audio peripheral.
+        # Calling music.stop() or music.set_volume() essentially tells the
+        # micro:bit to take control of P0 back from the digital driver.
+        music.stop()
+
+        # 3. Optional: Set a starting volume to avoid a "pop"
+        set_volume(255)
+
     # make the robot talk
     def talk(self, t):
+        self.unmute_audio()
         speech.say(t, speed=90, pitch=35, throat=225, mouth=225)
+        self.mute_audio()
 
     # make the robot sing
     def sing(self, s):
+        self.unmute_audio()
         speech.sing(s, speed=90, pitch=35, throat=225, mouth=225)
+        self.mute_audio()
 
     # make the robot idle
     def idle(self):
@@ -544,9 +565,10 @@ class RobotPu(object):
 
     # make the robot sleep
     def sleep(self):
-        self.balance_param()
-        self.stand()
+        #self.balance_param()
+        #self.stand()
         wk.eyes_ctl(0)
+        wk.power_off()
         self.np.clear()
         if self.check_wakeup() == 1:
             self.gst = 0

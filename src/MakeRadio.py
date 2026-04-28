@@ -11,6 +11,7 @@ class MakeRadio:
         self.dal_header = b"\x01" + g.to_bytes(1, "little") + b"\x01"
         radio.off()
         radio.on()
+        radio.config(power=4)
 
     def send_str(self, s):
         ts = running_time().to_bytes(4, "little")
