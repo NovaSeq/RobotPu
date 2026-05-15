@@ -675,10 +675,9 @@ class RobotPu(object):
         self.gst = 0
         self.rest()
 
+    # select AI level. 0: off
     def ai(self, v:int):
         self.ai_m = v
-        display.show(v)
-
 
     # publish robot status code via radio
     def s_code(self, code):
@@ -811,7 +810,7 @@ class RobotPu(object):
         self.st_dict.get(self.gst, self.sleep)()
         
         # Handle blinking and state tracking
-        if self.gst >= 0 and self.ai_m >= 1:  # If in a normal state
+        if self.gst >= 0 and self.ai_m >= 1:  # If in a normal state. Only blink when AI is on
             wk.blink(self.alt_l)  # Update eye blink animation
             self.last_state = self.gst  # Remember last normal state
 
