@@ -114,6 +114,9 @@ class RobotPu(object):
         self.music = MusicLib()   # Music and sound effects
         self.sonar = HCSR04()     # Ultrasonic distance sensor
         self.np = neopixel.NeoPixel(pin16, 4)  # LED control
+
+        # AI mode
+        self.ai_m = 1
         
         # Initialize communication
         self.set_group(self.groupID)
@@ -145,7 +148,10 @@ class RobotPu(object):
             "#pupitch" : self.pitch,
             "#puB" : self.button,
             "#pulogo" : self.logo,
-            "#purs" : self.pose
+            "#purs" : self.pose,
+            "#puai" : self.ai,
+            "#pule" : wk.left_eye_bright,
+            "#pure" : wk.right_eye_bright
         }
 
     # read config from the pu.txt file
@@ -317,7 +323,7 @@ class RobotPu(object):
             async_sp (float): Speed multiplier for asynchronous movement (0.0-1.0)
             
         Returns:
-            int: Status code indicating movement completion
+            int: Status code indicating movement compleblinktion
         """
         return wk.move(pr, states, sync_list, sp, async_list, async_sp)
 
@@ -669,6 +675,10 @@ class RobotPu(object):
         self.gst = 0
         self.rest()
 
+    # select AI level. 0: off
+    def ai(self, v:int):
+        self.ai_m = v
+
     # publish robot status code via radio
     def s_code(self, code):
         self.ro.send_str(":".join(["#puc", self.sn, code]))
@@ -800,7 +810,7 @@ class RobotPu(object):
         self.st_dict.get(self.gst, self.sleep)()
         
         # Handle blinking and state tracking
-        if self.gst >= 0:  # If in a normal state
+        if self.gst >= 0 and self.ai_m >= 1:  # If in a normal state. Only blink when AI is on
             wk.blink(self.alt_l)  # Update eye blink animation
             self.last_state = self.gst  # Remember last normal state
 
